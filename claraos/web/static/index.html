@@ -34,16 +34,16 @@
     <div class="overflow-y-auto">
       <!-- Brand Header -->
       <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30">
+        <div id="sidebar-brand-box" class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 shrink-0">
             <i class="fa-solid fa-brain text-lg"></i>
           </div>
-          <div>
-            <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white via-purple-200 to-slate-400 bg-clip-text text-transparent">ClaraOS</span>
-            <span class="text-[9px] uppercase tracking-wider block font-semibold text-purple-400 -mt-1">AI Homelab OS</span>
+          <div class="min-w-0">
+            <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white via-purple-200 to-slate-400 bg-clip-text text-transparent truncate block">ClaraOS</span>
+            <span class="text-[9px] uppercase tracking-wider block font-semibold text-purple-400 -mt-0.5 truncate">AI Homelab OS</span>
           </div>
         </div>
-        <button id="toggle-sidebar" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+        <button id="toggle-sidebar" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition shrink-0 ml-2">
           <i class="fa-solid fa-bars-staggered"></i>
         </button>
       </div>
@@ -104,10 +104,10 @@
     <!-- Top Navbar -->
     <header class="h-16 glass-panel border-x-0 border-t-0 flex items-center justify-between px-6 shrink-0 sticky top-0 z-20">
       <div class="flex items-center gap-3">
-        <h1 id="page-title" class="text-lg font-bold text-white">Clara AI Agent Studio</h1>
-        <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Active</span>
+        <h1 id="page-title" class="text-lg font-bold text-white">Ứng dụng</h1>
+        <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
       </div>
-      <div class="flex items-center gap-2.5">
+      <div id="header-actions" class="flex items-center gap-2.5">
         <button onclick="openAppStore()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white transition flex items-center gap-2 shadow-lg shadow-cyan-600/20">
           <i class="fa-solid fa-bag-shopping"></i>
           <span>App Store</span>
@@ -209,7 +209,7 @@
     <!-- TAB: APPS & DOCKER -->
     <div id="tab-apps" class="tab-pane p-6 space-y-4">
       <!-- App Launcher Grid (OS Desktop Style) -->
-      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-8 gap-x-4 justify-items-center py-6">
+      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-y-10 gap-x-8 justify-items-center max-w-6xl mx-auto py-10 px-6">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
@@ -408,40 +408,295 @@
     let currentTab = 'apps';
     let appCatalogMap = {};
 
-    // Navigation switching
-    document.querySelectorAll('#nav-list a').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
-        const tab = item.dataset.tab;
-        switchTab(tab);
-      });
-    });
+    const NATIVE_TAB_MAP = {
+      'media-organizer': 'organizer',
+      'cloud-sync': 'sync',
+      'debrid-ingest': 'debrid',
+      'organizer': 'organizer',
+      'sync': 'sync',
+      'debrid': 'debrid',
+      'agents': 'agents',
+      'settings': 'settings'
+    };
+
+    const APP_SHELLS = {
+      apps: {
+        title: 'ClaraOS',
+        subtitle: 'AI Homelab OS',
+        icon: 'fa-brain',
+        iconGradient: 'from-purple-600 to-indigo-500 shadow-purple-500/30',
+        docTitle: 'ClaraOS - The AI-Native Homelab Operating System',
+        headerTitle: 'Ứng dụng & Dịch vụ',
+        badgeText: 'Clara Core Active',
+        badgeClass: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+        navHtml: `
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hệ thống</div>
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 transition">
+            <i class="fa-solid fa-shapes text-cyan-400 w-5 text-center"></i>
+            <span>Ứng dụng</span>
+          </a>
+          <a href="#store" onclick="openAppStore(); return false;" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
+            <span>App Store</span>
+          </a>
+          <a href="#agents" onclick="switchTab('agents'); return false;" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
+              <span>Agent Studio</span>
+            </div>
+            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
+          </a>
+          <a href="#settings" onclick="switchTab('settings'); return false;" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
+            <span>Cài đặt</span>
+          </a>
+        `,
+        headerActionsHtml: `
+          <button onclick="openAppStore()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white transition flex items-center gap-2 shadow-lg shadow-cyan-600/20">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span>App Store</span>
+          </button>
+          <button onclick="refreshCurrentTab()" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới
+          </button>
+        `
+      },
+      organizer: {
+        title: 'Media Organizer',
+        subtitle: 'TMDb & Library Auto',
+        icon: 'fa-film',
+        iconGradient: 'from-pink-600 to-rose-500 shadow-pink-500/30',
+        docTitle: 'Media Organizer - ClaraOS',
+        headerTitle: 'Media Organizer',
+        badgeText: 'TMDb Scraper Active',
+        badgeClass: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
+        navHtml: `
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
+            <i class="fa-solid fa-arrow-left text-pink-400"></i>
+            <span>← Quay về ClaraOS</span>
+          </a>
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-pink-400 uppercase tracking-wider">Media Organizer</div>
+          <a href="#staging" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
+            <i class="fa-solid fa-folder-tree text-pink-400 w-5 text-center"></i>
+            <span>Duyệt Staging</span>
+          </a>
+          <a href="#tmdb" onclick="loadOrganizerFiles();" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-wand-magic-sparkles text-pink-400 w-5 text-center"></i>
+            <span>Quét & Khớp TMDb</span>
+          </a>
+          <div class="pt-4 border-t border-slate-800/60 mt-4 px-3">
+            <span class="text-[11px] text-slate-500 block mb-1">Thư mục Staging:</span>
+            <span class="text-[10px] text-slate-400 font-mono break-all bg-slate-900/60 p-2 rounded-lg border border-slate-800 block">/srv/mergerfs/MainPool/Phim/_staging</span>
+          </div>
+        `,
+        headerActionsHtml: `
+          <button onclick="loadOrganizerFiles()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-pink-600 hover:bg-pink-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-pink-600/20">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Quét Staging</span>
+          </button>
+          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-house text-slate-400"></i> OS Home
+          </button>
+        `
+      },
+      sync: {
+        title: 'Cloud Sync Pro',
+        subtitle: 'Rclone VFS Engine',
+        icon: 'fa-cloud-arrow-up',
+        iconGradient: 'from-indigo-600 to-cyan-500 shadow-indigo-500/30',
+        docTitle: 'Cloud Sync Pro - ClaraOS',
+        headerTitle: 'Cloud Sync Pro',
+        badgeText: 'Linux /proc I/O Active',
+        badgeClass: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
+        navHtml: `
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
+            <i class="fa-solid fa-arrow-left text-indigo-400"></i>
+            <span>← Quay về ClaraOS</span>
+          </a>
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">Cloud Sync Pro</div>
+          <a href="#transfers" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
+            <i class="fa-solid fa-arrow-up-right-dots text-indigo-400 w-5 text-center"></i>
+            <span>Active Transfers</span>
+          </a>
+          <div class="pt-4 border-t border-slate-800/60 mt-4 px-3">
+            <span class="text-[11px] text-slate-500 block mb-1">VFS Storage Pool:</span>
+            <span class="text-[10px] text-slate-400 font-mono break-all bg-slate-900/60 p-2 rounded-lg border border-slate-800 block">/srv/mergerfs/MainPool</span>
+          </div>
+        `,
+        headerActionsHtml: `
+          <button onclick="loadSyncStats()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Làm mới I/O</span>
+          </button>
+          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-house text-slate-400"></i> OS Home
+          </button>
+        `
+      },
+      debrid: {
+        title: 'Debrid Ingestion',
+        subtitle: 'Torbox Cloud Cache',
+        icon: 'fa-download',
+        iconGradient: 'from-emerald-600 to-teal-500 shadow-emerald-500/30',
+        docTitle: 'Debrid Ingestion - ClaraOS',
+        headerTitle: 'Debrid Ingestion',
+        badgeText: 'Torbox Ready',
+        badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+        navHtml: `
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
+            <i class="fa-solid fa-arrow-left text-emerald-400"></i>
+            <span>← Quay về ClaraOS</span>
+          </a>
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Debrid Ingestion</div>
+          <a href="#queue" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
+            <i class="fa-solid fa-list-check text-emerald-400 w-5 text-center"></i>
+            <span>Hàng đợi Cloud</span>
+          </a>
+          <a href="#add" onclick="document.getElementById('debrid-magnet-input')?.focus();" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-magnet text-emerald-400 w-5 text-center"></i>
+            <span>Thêm Magnet/Link</span>
+          </a>
+        `,
+        headerActionsHtml: `
+          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-house text-slate-400"></i> OS Home
+          </button>
+        `
+      },
+      agents: {
+        title: 'Agent Studio',
+        subtitle: 'Autonomous AI Agents',
+        icon: 'fa-robot',
+        iconGradient: 'from-purple-600 to-indigo-500 shadow-purple-500/30',
+        docTitle: 'Agent Studio - ClaraOS',
+        headerTitle: 'Clara AI Agent Studio',
+        badgeText: 'Hub Active',
+        badgeClass: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+        navHtml: `
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
+            <i class="fa-solid fa-arrow-left text-purple-400"></i>
+            <span>← Quay về ClaraOS</span>
+          </a>
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Agent Studio</div>
+          <a href="#console" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
+            <i class="fa-solid fa-terminal text-purple-400 w-5 text-center"></i>
+            <span>Coding Console</span>
+          </a>
+          <a href="#antigravity" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-microchip text-purple-400 w-5 text-center"></i>
+            <span>Antigravity (AGY)</span>
+          </a>
+          <a href="#claude" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-brain text-purple-400 w-5 text-center"></i>
+            <span>Claude Code</span>
+          </a>
+        `,
+        headerActionsHtml: `
+          <button onclick="document.getElementById('agent-console').innerHTML='<div class=\\'text-purple-400\\'>Console cleared. Sẵn sàng nhận lệnh mới.</div>';" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-trash-can text-slate-400"></i> Xóa Console
+          </button>
+          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-house text-slate-400"></i> OS Home
+          </button>
+        `
+      },
+      settings: {
+        title: 'Cài đặt Hệ thống',
+        subtitle: 'ClaraOS Configuration',
+        icon: 'fa-sliders',
+        iconGradient: 'from-amber-600 to-orange-500 shadow-amber-500/30',
+        docTitle: 'Cài đặt Hệ thống - ClaraOS',
+        headerTitle: 'Cài đặt Hệ thống',
+        badgeText: 'Config Mode',
+        badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+        navHtml: `
+          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
+            <i class="fa-solid fa-arrow-left text-amber-400"></i>
+            <span>← Quay về ClaraOS</span>
+          </a>
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Cấu hình Hệ thống</div>
+          <a href="#modules" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
+            <i class="fa-solid fa-cubes text-amber-400 w-5 text-center"></i>
+            <span>Quản lý Modules</span>
+          </a>
+        `,
+        headerActionsHtml: `
+          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-house text-slate-400"></i> OS Home
+          </button>
+        `
+      }
+    };
+
+    function renderAppShell(tab) {
+      const shell = APP_SHELLS[tab] || APP_SHELLS['apps'];
+
+      // 1. Update Document Title
+      document.title = shell.docTitle;
+
+      // 2. Update Sidebar Brand Box
+      const brandBox = document.getElementById('sidebar-brand-box');
+      if (brandBox) {
+        brandBox.innerHTML = `
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr ${shell.iconGradient} flex items-center justify-center text-white shadow-lg shrink-0">
+            <i class="fa-solid ${shell.icon} text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent truncate block">${shell.title}</span>
+            <span class="text-[9px] uppercase tracking-wider block font-semibold text-slate-400 -mt-0.5 truncate">${shell.subtitle}</span>
+          </div>
+        `;
+      }
+
+      // 3. Update Sidebar Nav List
+      const navList = document.getElementById('nav-list');
+      if (navList) {
+        navList.innerHTML = shell.navHtml;
+      }
+
+      // 4. Update Header Title & Status Badge
+      const pageTitle = document.getElementById('page-title');
+      if (pageTitle) pageTitle.textContent = shell.headerTitle;
+
+      const badge = document.getElementById('module-status-badge');
+      if (badge) {
+        badge.textContent = shell.badgeText;
+        badge.className = `text-xs px-2.5 py-0.5 rounded-full font-medium ${shell.badgeClass}`;
+      }
+
+      // 5. Update Header Actions
+      const headerActions = document.getElementById('header-actions');
+      if (headerActions) {
+        headerActions.innerHTML = shell.headerActionsHtml;
+      }
+    }
 
     function switchTab(tab) {
-      currentTab = tab;
-      document.querySelectorAll('#nav-list a').forEach(a => a.classList.remove('active'));
-      const activeLink = document.querySelector(`#nav-list a[data-tab="${tab}"]`);
-      if (activeLink) activeLink.classList.add('active');
+      const targetTab = NATIVE_TAB_MAP[tab] || tab;
+      currentTab = targetTab;
 
+      // Update URL hash without scroll jumps
+      if (window.location.hash !== '#' + targetTab) {
+        history.replaceState(null, '', '#' + targetTab);
+      }
+
+      // Hide all panes and display active one
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-      const activePane = document.getElementById(`tab-${tab}`);
+      const activePane = document.getElementById(`tab-${targetTab}`);
       if (activePane) activePane.classList.remove('hidden');
 
-      const titles = {
-        apps: 'Ứng dụng',
-        agents: 'Clara AI Agent Studio',
-        sync: 'Cloud Sync Pro',
-        organizer: 'Media Organizer',
-        debrid: 'Debrid Ingestion',
-        settings: 'Cài đặt hệ thống'
-      };
-      document.getElementById('page-title').textContent = titles[tab] || 'Dashboard';
+      // Transform UI shell to the selected app
+      renderAppShell(targetTab);
+
       refreshCurrentTab();
     }
 
     function launchApp(e, appId, isRunning, url, isNative) {
       if (e.target.closest('button') || e.target.closest('a')) return;
-      if (isNative || isRunning) {
+      if (isNative) {
+        const targetTab = NATIVE_TAB_MAP[appId] || appId;
+        switchTab(targetTab);
+      } else if (isRunning) {
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
         controlApp(appId, 'start');
@@ -544,7 +799,21 @@
       let actionsHtml = '';
 
       // 1. Mở ứng dụng (nếu đang chạy hoặc native)
-      if (app.native || app.is_running) {
+      if (app.native) {
+        const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
+        actionsHtml += `
+          <button onclick="switchTab('${targetTab}'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-purple-500/20 text-left transition">
+            <i class="fa-solid fa-arrow-right-to-bracket text-purple-400 w-4 text-center"></i>
+            <span>Mở ứng dụng</span>
+          </button>
+          <button onclick="window.open('/#${targetTab}', '_blank'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 text-left transition">
+            <i class="fa-solid fa-arrow-up-right-from-square text-slate-400 w-4 text-center"></i>
+            <span>Mở trong tab mới</span>
+          </button>
+        `;
+      } else if (app.is_running) {
         actionsHtml += `
           <button onclick="window.open('${appUrl}', '_blank'); closeContextMenu();" 
                   class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition">
@@ -769,10 +1038,10 @@
                  title="${app.name} (${appUrl})">
               
               <!-- App Icon Squircle Container -->
-              <div class="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
+              <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
                 
                 <!-- Squircle Icon Box -->
-                <div class="w-full h-full rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-800/90 to-slate-900 border border-slate-700/50 shadow-xl shadow-black/50 p-3.5 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:shadow-cyan-500/20 transition-all duration-200">
+                <div class="w-full h-full rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-800/90 to-slate-900 border border-slate-700/50 shadow-xl shadow-black/50 p-4 sm:p-5 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:shadow-cyan-500/20 transition-all duration-200">
                   <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
                        alt="${app.name}" 
                        class="w-full h-full object-contain filter drop-shadow-md"
@@ -781,7 +1050,7 @@
               </div>
 
               <!-- App Label / Name -->
-              <span class="font-medium text-xs sm:text-sm text-slate-200 mt-2.5 truncate max-w-[100px] sm:max-w-[120px] group-hover:text-cyan-300 transition text-center">
+              <span class="font-semibold text-xs sm:text-sm text-slate-200 mt-3 truncate max-w-[110px] sm:max-w-[130px] group-hover:text-cyan-300 transition text-center">
                 ${app.name}
               </span>
 
@@ -970,17 +1239,19 @@
     updateNavigationVisibility();
 
     // Hash routing: #apps (default), #sync, #organizer, #debrid, #agents, #settings
-    const initialHash = window.location.hash.replace('#', '');
-    if (initialHash && document.getElementById(`tab-${initialHash}`)) {
-      switchTab(initialHash);
+    const initialRaw = window.location.hash.replace('#', '');
+    const initialTab = NATIVE_TAB_MAP[initialRaw] || initialRaw;
+    if (initialTab && document.getElementById(`tab-${initialTab}`)) {
+      switchTab(initialTab);
     } else {
       switchTab('apps');
     }
 
     window.addEventListener('hashchange', () => {
-      const h = window.location.hash.replace('#', '');
-      if (h && document.getElementById(`tab-${h}`)) {
-        switchTab(h);
+      const raw = window.location.hash.replace('#', '');
+      const tab = NATIVE_TAB_MAP[raw] || raw;
+      if (tab && document.getElementById(`tab-${tab}`)) {
+        switchTab(tab);
       }
     });
   </script>
