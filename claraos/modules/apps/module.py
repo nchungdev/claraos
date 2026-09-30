@@ -34,6 +34,16 @@ class AppsModule(BaseModule):
 
             catalog_with_status = []
             for app in APP_CATALOG:
+                if app.get("native"):
+                    catalog_with_status.append({
+                        **app,
+                        "installed": True,
+                        "state": "running",
+                        "container_id": None,
+                        "is_running": True
+                    })
+                    continue
+
                 app_id = app["id"].lower()
                 c = container_map.get(app_id)
                 installed = c is not None
@@ -58,6 +68,9 @@ class AppsModule(BaseModule):
             app = next((a for a in APP_CATALOG if a["id"].lower() == app_id.lower()), None)
             if not app:
                 raise HTTPException(status_code=404, detail="App not found in catalog")
+
+            if app.get("native"):
+                return {"status": "success", "message": f"{app['name']} is a native ClaraOS service."}
 
             containers = await docker_manager.list_containers(all_containers=True)
             c = next((item for item in containers if any(n.lstrip("/").lower() == app_id.lower() for n in item.get("Names", []))), None)

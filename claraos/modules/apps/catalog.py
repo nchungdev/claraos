@@ -2,6 +2,39 @@ from typing import Dict, Any, List
 
 APP_CATALOG: List[Dict[str, Any]] = [
     {
+        "id": "cloud-sync",
+        "name": "Cloud Sync Pro",
+        "category": "System",
+        "description": "Real-time Linux /proc I/O monitoring & Rclone Cloud Sync.",
+        "icon": "fa-cloud-arrow-up",
+        "logo_id": "rclone",
+        "native": True,
+        "default_port": 8090,
+        "url": "/#sync"
+    },
+    {
+        "id": "media-organizer",
+        "name": "Media Organizer",
+        "category": "Media",
+        "description": "TMDb metadata scraper & automatic media renamer.",
+        "icon": "fa-film",
+        "logo_id": "tmdb",
+        "native": True,
+        "default_port": 8090,
+        "url": "/#organizer"
+    },
+    {
+        "id": "debrid-ingest",
+        "name": "Debrid Ingestion",
+        "category": "Downloads",
+        "description": "Torbox high-speed Cloud Debrid downloader.",
+        "icon": "fa-download",
+        "logo_id": "torbox",
+        "native": True,
+        "default_port": 8090,
+        "url": "/#debrid"
+    },
+    {
         "id": "plex",
         "name": "Plex Media Server",
         "category": "Media",
