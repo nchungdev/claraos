@@ -18,7 +18,8 @@ services:
     volumes:
       - ./config:/config
       - /srv/mergerfs/MainPool:/data
+      - /var/lib/media-staging:/staging
       # Mount host /proc for Rclone process inspection:
       - /proc:/proc:ro
-      # Mount host Docker Socket to enable 1-Click App Store (Plex, Sonarr, etc.):
+      # Mount host Docker Socket to enable App Store (Plex, Sonarr, etc.):
       - /var/run/docker.sock:/var/run/docker.sock

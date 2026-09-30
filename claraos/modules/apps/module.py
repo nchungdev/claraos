@@ -14,7 +14,7 @@ logger = logging.getLogger("claraos.modules.apps")
 class AppsModule(BaseModule):
     name = "apps"
     title = "App Store & Containers"
-    description = "1-Click Docker App Store & manager for Plex, *Arr stack, Komga & media tools"
+    description = "Docker App Store & manager for Plex, *Arr stack, Komga & media tools"
     icon = "puzzle-piece"
 
     def __init__(self):
