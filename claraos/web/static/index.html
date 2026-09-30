@@ -229,20 +229,10 @@
     </div>
 
     <!-- TAB: APPS & DOCKER -->
-    <div id="tab-apps" class="tab-pane hidden p-6 space-y-6">
-      <div class="glass-panel p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <h2 class="text-base font-bold text-white mb-1">1-Click Docker App Store</h2>
-          <p class="text-xs text-slate-400">Dễ dàng cài đặt và quản lý Plex, *Arr stack, Komga, MeTube và các công cụ homelab phổ biến độc lập qua Docker.</p>
-        </div>
-        <button onclick="loadAppCatalog()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
-          <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Cập nhật trạng thái
-        </button>
-      </div>
-
-      <!-- App Grid -->
-      <div id="app-catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách App Store...</div>
+    <div id="tab-apps" class="tab-pane hidden p-6 space-y-4">
+      <!-- App Grid (Compact & Sleek) -->
+      <div id="app-catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
 
@@ -416,34 +406,35 @@
         const d = await res.json();
         const grid = document.getElementById('app-catalog-grid');
         grid.innerHTML = d.catalog.map(app => `
-          <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between border ${app.is_running ? 'border-emerald-500/30' : 'border-slate-800'}">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 text-lg">
-                  <i class="fa-solid ${app.icon}"></i>
-                </div>
-                <span class="px-2.5 py-0.5 text-[11px] rounded-full font-mono font-medium ${app.is_running ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'}">
-                  ${app.is_running ? '🟢 Running' : (app.installed ? '⚪ Stopped' : 'Not Installed')}
-                </span>
+          <div class="glass-panel p-3.5 rounded-xl flex items-center justify-between border ${app.is_running ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : 'border-slate-800'} hover:border-slate-700 transition group">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-lg bg-slate-800/90 flex items-center justify-center text-cyan-400 text-sm shrink-0 group-hover:scale-105 transition">
+                <i class="fa-solid ${app.icon}"></i>
               </div>
-              <h3 class="font-bold text-base text-white">${app.name}</h3>
-              <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">${app.description}</p>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="font-bold text-sm text-white truncate">${app.name}</h4>
+                  <span class="w-2 h-2 rounded-full ${app.is_running ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : (app.installed ? 'bg-amber-400' : 'bg-slate-600')} shrink-0" title="${app.state}"></span>
+                </div>
+                <div class="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5">
+                  <span>:${app.default_port}</span>
+                  <span class="text-slate-600">•</span>
+                  <span class="capitalize text-slate-400">${app.category}</span>
+                </div>
+              </div>
             </div>
             
-            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <span class="text-xs font-mono text-slate-500">Port ${app.default_port}</span>
-              <div class="space-x-2">
-                ${app.installed ? `
-                  ${app.is_running ? `
-                    <button onclick="controlApp('${app.id}', 'stop')" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-medium rounded-lg transition">Stop</button>
-                    <a href="http://${window.location.hostname}:${app.default_port}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition">Open</a>
-                  ` : `
-                    <button onclick="controlApp('${app.id}', 'start')" class="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg transition">Start</button>
-                  `}
+            <div class="flex items-center gap-1.5 shrink-0 ml-3">
+              ${app.installed ? `
+                ${app.is_running ? `
+                  <button onclick="controlApp('${app.id}', 'stop')" class="p-1.5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg transition text-xs" title="Dừng"><i class="fa-solid fa-power-off"></i></button>
+                  <a href="http://${window.location.hostname}:${app.default_port}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-600/30 text-cyan-300 text-xs font-medium rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Mở</a>
                 ` : `
-                  <button onclick="controlApp('${app.id}', 'install')" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition">1-Click Install</button>
+                  <button onclick="controlApp('${app.id}', 'start')" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-play text-[10px]"></i> Chạy</button>
                 `}
-              </div>
+              ` : `
+                <button onclick="controlApp('${app.id}', 'install')" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-download text-[10px]"></i> Cài</button>
+              `}
             </div>
           </div>
         `).join('');
