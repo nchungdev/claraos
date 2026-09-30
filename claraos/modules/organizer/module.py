@@ -67,8 +67,12 @@ class OrganizerModule(BaseModule):
                 return {"results": [], "error": "TMDB_API_KEY is not configured in settings"}
 
             url = f"https://api.themoviedb.org/3/search/{media_type}"
-            headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+            headers = {"Accept": "application/json"}
             params = {"query": query, "language": config.get("modules", "organizer", "language", default="vi-VN")}
+            if len(api_key) <= 32:
+                params["api_key"] = api_key
+            else:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with httpx.AsyncClient() as client:
                 res = await client.get(url, headers=headers, params=params, timeout=10.0)
