@@ -329,8 +329,20 @@
     </div>
   </div>
 
+  <!-- App Context Menu (Right-click Popup) -->
+  <div id="app-context-menu" class="hidden fixed z-50 min-w-[210px] bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl rounded-2xl p-1.5 text-xs text-slate-200 font-medium select-none shadow-black/80">
+    <div class="px-3 py-2 font-bold text-slate-400 border-b border-slate-800/80 text-[11px] truncate flex items-center justify-between">
+      <span id="context-menu-name" class="truncate text-white font-semibold">App Name</span>
+      <span id="context-menu-status" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Ready</span>
+    </div>
+    <div id="context-menu-actions" class="py-1 space-y-0.5">
+      <!-- Injected dynamically -->
+    </div>
+  </div>
+
   <script>
     let currentTab = 'apps';
+    let appCatalogMap = {};
 
     // Navigation switching
     document.querySelectorAll('#nav-list a').forEach(item => {
@@ -436,15 +448,155 @@
       }
     }
 
+    function openAppContextMenu(e, appId) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const app = appCatalogMap[appId];
+      if (!app) return;
+
+      const appUrl = getAppUrl(app);
+      const menu = document.getElementById('app-context-menu');
+      const title = document.getElementById('context-menu-name');
+      const statusEl = document.getElementById('context-menu-status');
+      const actionsBox = document.getElementById('context-menu-actions');
+
+      title.textContent = app.name;
+      
+      if (app.native) {
+        statusEl.textContent = 'Core';
+        statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300';
+      } else if (app.is_running) {
+        statusEl.textContent = 'Đang chạy';
+        statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+      } else if (app.installed) {
+        statusEl.textContent = 'Đã dừng';
+        statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400';
+      } else {
+        statusEl.textContent = 'Chưa cài';
+        statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400';
+      }
+
+      let actionsHtml = '';
+
+      // 1. Mở ứng dụng (nếu đang chạy hoặc native)
+      if (app.native || app.is_running) {
+        actionsHtml += `
+          <button onclick="window.open('${appUrl}', '_blank'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition">
+            <i class="fa-solid fa-arrow-up-right-from-square text-cyan-400 w-4 text-center"></i>
+            <span>Mở trong tab mới</span>
+          </button>
+        `;
+      }
+
+      // 2. Các hành động quản lý Docker
+      if (!app.native) {
+        if (app.is_running) {
+          actionsHtml += `
+            <button onclick="controlApp('${app.id}', 'restart'); closeContextMenu();" 
+                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-indigo-500/20 text-left transition">
+              <i class="fa-solid fa-rotate-right text-indigo-400 w-4 text-center"></i>
+              <span>Khởi động lại</span>
+            </button>
+            <button onclick="controlApp('${app.id}', 'stop'); closeContextMenu();" 
+                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-amber-500/20 text-left transition">
+              <i class="fa-solid fa-stop text-amber-400 w-4 text-center"></i>
+              <span>Dừng container</span>
+            </button>
+          `;
+        } else if (app.installed) {
+          actionsHtml += `
+            <button onclick="controlApp('${app.id}', 'start'); closeContextMenu();" 
+                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-emerald-500/20 text-left transition">
+              <i class="fa-solid fa-play text-emerald-400 w-4 text-center"></i>
+              <span>Khởi động</span>
+            </button>
+          `;
+        } else {
+          actionsHtml += `
+            <button onclick="controlApp('${app.id}', 'install'); closeContextMenu();" 
+                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition">
+              <i class="fa-solid fa-cloud-arrow-down text-cyan-400 w-4 text-center"></i>
+              <span>Cài đặt</span>
+            </button>
+          `;
+        }
+      }
+
+      // 3. Sao chép URL
+      actionsHtml += `
+        <div class="h-px bg-slate-800/80 my-1"></div>
+        <button onclick="copyToClipboard('${appUrl}'); closeContextMenu();" 
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 text-left transition">
+          <i class="fa-solid fa-copy text-slate-400 w-4 text-center"></i>
+          <span>Sao chép liên kết</span>
+        </button>
+      `;
+
+      // 4. Gỡ cài đặt (nếu đã cài đặt và không phải native)
+      if (!app.native && app.installed) {
+        actionsHtml += `
+          <div class="h-px bg-slate-800/80 my-1"></div>
+          <button onclick="confirmUninstall('${app.id}', '${app.name}'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 text-left transition">
+            <i class="fa-solid fa-trash-can text-rose-400 w-4 text-center"></i>
+            <span>Gỡ cài đặt</span>
+          </button>
+        `;
+      }
+
+      actionsBox.innerHTML = actionsHtml;
+
+      // Position popup clamped within viewport
+      menu.classList.remove('hidden');
+      const menuWidth = 210;
+      const menuHeight = 240;
+      let posX = e.clientX;
+      let posY = e.clientY;
+
+      if (posX + menuWidth > window.innerWidth) {
+        posX = window.innerWidth - menuWidth - 16;
+      }
+      if (posY + menuHeight > window.innerHeight) {
+        posY = window.innerHeight - menuHeight - 16;
+      }
+
+      menu.style.left = `${Math.max(12, posX)}px`;
+      menu.style.top = `${Math.max(12, posY)}px`;
+    }
+
+    function closeContextMenu() {
+      const menu = document.getElementById('app-context-menu');
+      if (menu) menu.classList.add('hidden');
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#app-context-menu')) {
+        closeContextMenu();
+      }
+    });
+    window.addEventListener('scroll', closeContextMenu, true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeContextMenu();
+    });
+
     async function loadAppCatalog() {
       try {
         const res = await fetch('/api/modules/apps/catalog');
         const d = await res.json();
         const grid = document.getElementById('app-catalog-grid');
+        d.catalog.forEach(app => { appCatalogMap[app.id] = app; });
+
         grid.innerHTML = d.catalog.map(app => {
           const appUrl = getAppUrl(app);
           return `
             <div onclick="launchApp(event, '${app.id}', ${app.is_running}, '${appUrl}', ${Boolean(app.native)})"
+                 oncontextmenu="openAppContextMenu(event, '${app.id}')"
                  class="flex flex-col items-center justify-center text-center relative group cursor-pointer p-2 transition-all duration-200 hover:-translate-y-2 select-none"
                  title="${app.name} (${appUrl})">
               
@@ -458,20 +610,6 @@
                        class="w-full h-full object-contain filter drop-shadow-md"
                        onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl\\'></i>';">
                 </div>
-
-                <!-- iOS-Style Delete Button (Corner of icon, visible on hover) -->
-                ${(!app.native && app.installed) ? `
-                  <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')" 
-                          class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-900/95 hover:bg-rose-600 text-slate-400 hover:text-white border border-slate-700 flex items-center justify-center transition shadow-lg text-[9px] opacity-0 group-hover:opacity-100 z-10" 
-                          title="Gỡ cài đặt">
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                ` : ''}
-
-                <!-- Subtle macOS Dock-style Running Dot -->
-                ${app.is_running ? `
-                  <span class="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400"></span>
-                ` : ''}
               </div>
 
               <!-- App Label / Name -->
