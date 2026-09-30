@@ -33,8 +33,13 @@ class AppsModule(BaseModule):
                     container_map[n.lower()] = c
 
             catalog_with_status = []
+            catalog_ids = set()
+
             for app in APP_CATALOG:
-                if app.get("native"):
+                app_id = app["id"].lower()
+                catalog_ids.add(app_id)
+
+                if app.get("native") or app_id == "omv":
                     catalog_with_status.append({
                         **app,
                         "installed": True,
@@ -44,7 +49,6 @@ class AppsModule(BaseModule):
                     })
                     continue
 
-                app_id = app["id"].lower()
                 c = container_map.get(app_id)
                 installed = c is not None
                 state = c.get("State", "stopped") if c else "not_installed"
@@ -56,6 +60,34 @@ class AppsModule(BaseModule):
                     "state": state,
                     "container_id": cid,
                     "is_running": state == "running"
+                })
+
+            # Auto-discover any active docker containers on NAS not in static catalog
+            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker"}
+            for name, c in container_map.items():
+                if name in catalog_ids or name in ignored_containers:
+                    continue
+                # Extract primary public port if available
+                public_port = 80
+                for p in c.get("Ports", []):
+                    if isinstance(p, dict) and p.get("PublicPort"):
+                        public_port = p["PublicPort"]
+                        break
+
+                catalog_with_status.append({
+                    "id": name,
+                    "name": name.capitalize(),
+                    "category": "Docker",
+                    "description": f"Container {name} on NAS ({c.get('Image', '')})",
+                    "icon": "fa-cube",
+                    "logo_id": name,
+                    "default_port": public_port,
+                    "installed": True,
+                    "state": c.get("State", "running"),
+                    "container_id": c.get("Id"),
+                    "is_running": c.get("State") == "running",
+                    "manageable": False,
+                    "protected": True
                 })
 
             return {

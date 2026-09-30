@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 
 APP_CATALOG: List[Dict[str, Any]] = [
+    # 1. Native ClaraOS Core Apps
     {
         "id": "cloud-sync",
         "name": "Cloud Sync Pro",
@@ -10,7 +11,9 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "logo_id": "rclone",
         "native": True,
         "default_port": 8090,
-        "url": "/#sync"
+        "url": "/#sync",
+        "protected": True,
+        "manageable": False
     },
     {
         "id": "media-organizer",
@@ -21,7 +24,9 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "logo_id": "tmdb",
         "native": True,
         "default_port": 8090,
-        "url": "/#organizer"
+        "url": "/#organizer",
+        "protected": True,
+        "manageable": False
     },
     {
         "id": "debrid-ingest",
@@ -32,14 +37,57 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "logo_id": "torbox",
         "native": True,
         "default_port": 8090,
-        "url": "/#debrid"
+        "url": "/#debrid",
+        "protected": True,
+        "manageable": False
     },
+    # 2. Existing NAS Host & Core Services
+    {
+        "id": "omv",
+        "name": "OpenMediaVault",
+        "category": "System",
+        "description": "OpenMediaVault NAS Storage, Disks, RAID & System Administration.",
+        "icon": "fa-server",
+        "logo_id": "openmediavault",
+        "default_port": 80,
+        "subdomain": "omv",
+        "protected": True,
+        "manageable": False,
+        "installed": True,
+        "is_running": True
+    },
+    {
+        "id": "agy-manager",
+        "name": "Agent Hub",
+        "category": "System",
+        "description": "Antigravity Multi-Agent orchestration & session manager.",
+        "icon": "fa-robot",
+        "logo_id": "anthropic",
+        "subdomain": "agy",
+        "default_port": 8585,
+        "protected": True,
+        "manageable": False
+    },
+    {
+        "id": "rclone",
+        "name": "Rclone Web GUI",
+        "category": "System",
+        "description": "Rclone RC Web Interface & VFS drive explorer.",
+        "icon": "fa-cloud",
+        "logo_id": "rclone",
+        "subdomain": "rclone",
+        "default_port": 5572,
+        "protected": True,
+        "manageable": False
+    },
+    # 3. Media Streaming & Request
     {
         "id": "plex",
         "name": "Plex Media Server",
         "category": "Media",
         "description": "Stream movies, TV shows, and personal media to all your devices.",
         "icon": "fa-play-circle",
+        "logo_id": "plex",
         "image": "lscr.io/linuxserver/plex:latest",
         "default_port": 32400,
         "ports": {"32400": "32400"},
@@ -50,8 +98,9 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "id": "jellyfin",
         "name": "Jellyfin",
         "category": "Media",
-        "description": "The Free Software Media System. Stream to any device from your own server.",
+        "description": "The Free Software Media System. Stream to any device from your server.",
         "icon": "fa-film",
+        "logo_id": "jellyfin",
         "image": "jellyfin/jellyfin:latest",
         "default_port": 8096,
         "ports": {"8096": "8096"},
@@ -59,11 +108,26 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
+        "id": "jellyseerr",
+        "name": "Jellyseerr",
+        "category": "Media",
+        "description": "Request management system for your Plex and Jellyfin media library.",
+        "icon": "fa-magnifying-glass",
+        "logo_id": "jellyseerr",
+        "image": "fallenbagel/jellyseerr:latest",
+        "default_port": 5055,
+        "ports": {"5055": "5055"},
+        "volumes": ["/config/jellyseerr:/app/config"],
+        "env": ["LOG_LEVEL=info"]
+    },
+    # 4. Automation & *Arr Stack
+    {
         "id": "sonarr",
         "name": "Sonarr",
         "category": "Automation",
-        "description": "Smart TV Series manager and automated downloader for Usenet and BitTorrent.",
+        "description": "Smart TV Series manager and automated downloader.",
         "icon": "fa-tv",
+        "logo_id": "sonarr",
         "image": "lscr.io/linuxserver/sonarr:latest",
         "default_port": 8989,
         "ports": {"8989": "8989"},
@@ -76,6 +140,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "category": "Automation",
         "description": "Movie collection manager and automated downloader.",
         "icon": "fa-video",
+        "logo_id": "radarr",
         "image": "lscr.io/linuxserver/radarr:latest",
         "default_port": 7878,
         "ports": {"7878": "7878"},
@@ -86,8 +151,9 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "id": "prowlarr",
         "name": "Prowlarr",
         "category": "Automation",
-        "description": "Indexer manager/proxy built on the popular *arr .net stack.",
+        "description": "Indexer manager/proxy integrating with Sonarr, Radarr & Lidarr.",
         "icon": "fa-cloud",
+        "logo_id": "prowlarr",
         "image": "lscr.io/linuxserver/prowlarr:latest",
         "default_port": 9696,
         "ports": {"9696": "9696"},
@@ -95,23 +161,26 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
-        "id": "jellyseerr",
-        "name": "Jellyseerr",
-        "category": "Media",
-        "description": "Free and open source software for managing requests for your media library.",
-        "icon": "fa-magnifying-glass",
-        "image": "fallenbagel/jellyseerr:latest",
-        "default_port": 5055,
-        "ports": {"5055": "5055"},
-        "volumes": ["/config/jellyseerr:/app/config"],
-        "env": ["LOG_LEVEL=info"]
+        "id": "tdarr",
+        "name": "Tdarr",
+        "category": "Automation",
+        "description": "Distributed GPU/CPU hardware-accelerated transcoding system.",
+        "icon": "fa-film",
+        "logo_id": "tdarr",
+        "image": "ghcr.io/haveagitgat/tdarr:latest",
+        "default_port": 8265,
+        "ports": {"8265": "8265"},
+        "volumes": ["/srv/mergerfs/MainPool:/media", "/config/tdarr:/app/configs"],
+        "env": ["PUID=1000", "PGID=1000"]
     },
+    # 5. Books, Comics & Manga
     {
         "id": "komga",
         "name": "Komga",
         "category": "Books",
         "description": "Free and open source comics/manga server with OPDS support.",
         "icon": "fa-book-open",
+        "logo_id": "komga",
         "image": "gotson/komga:latest",
         "default_port": 25600,
         "ports": {"25600": "25600"},
@@ -119,27 +188,130 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
+        "id": "kavita",
+        "name": "Kavita",
+        "category": "Books",
+        "description": "Fast, feature-rich cross-platform reading server for manga & comics.",
+        "icon": "fa-book",
+        "logo_id": "kavita",
+        "image": "jvmilazz0/kavita:latest",
+        "default_port": 5000,
+        "ports": {"5000": "5000"},
+        "volumes": ["/srv/mergerfs/MainPool/Truyen:/data", "/config/kavita:/kavita/config"],
+        "env": ["PUID=1000", "PGID=1000"]
+    },
+    {
+        "id": "calibre-web",
+        "name": "Calibre-Web",
+        "category": "Books",
+        "description": "Clean web interface for reading and managing Calibre e-book libraries.",
+        "icon": "fa-book-bookmark",
+        "logo_id": "calibre-web",
+        "image": "lscr.io/linuxserver/calibre-web:latest",
+        "default_port": 8083,
+        "ports": {"8083": "8083"},
+        "volumes": ["/srv/mergerfs/MainPool/Books:/books", "/config/calibre-web:/config"],
+        "env": ["PUID=1000", "PGID=1000"]
+    },
+    # 6. File Management & Download Tools
+    {
         "id": "filebrowser",
         "name": "FileBrowser",
         "category": "Tools",
-        "description": "Provides a file managing interface within a specified directory.",
+        "description": "Provides a file managing interface within your storage pool.",
         "icon": "fa-folder-open",
+        "logo_id": "filebrowser",
         "image": "filebrowser/filebrowser:latest",
         "default_port": 8080,
-        "ports": {"8082": "80"},
+        "ports": {"8080": "80"},
         "volumes": ["/srv/mergerfs/MainPool:/srv", "/config/filebrowser:/config"],
         "env": []
     },
     {
+        "id": "openlist",
+        "name": "OpenList",
+        "category": "Tools",
+        "description": "High-speed 115 cloud drive indexing & streaming server.",
+        "icon": "fa-folder-tree",
+        "logo_id": "openlist",
+        "image": "openlistteam/openlist:latest",
+        "default_port": 5244,
+        "ports": {"5244": "5244"},
+        "volumes": ["/config/openlist:/app/data"],
+        "env": []
+    },
+    {
+        "id": "ariang",
+        "name": "AriaNg",
+        "category": "Downloads",
+        "description": "Modern Web frontend for Aria2 high-speed download engine.",
+        "icon": "fa-download",
+        "logo_id": "ariang",
+        "subdomain": "ariang",
+        "default_port": 6880
+    },
+    {
         "id": "metube",
         "name": "MeTube",
-        "category": "Tools",
+        "category": "Downloads",
         "description": "Web GUI for youtube-dl / yt-dlp with playlist support.",
         "icon": "fa-youtube",
+        "logo_id": "metube",
         "image": "ghcr.io/alexta69/metube:latest",
         "default_port": 8081,
         "ports": {"8081": "8081"},
         "volumes": ["/srv/mergerfs/MainPool/Downloads:/downloads"],
         "env": ["OUTPUT_TEMPLATE=%(title)s.%(ext)s"]
+    },
+    {
+        "id": "flaresolverr",
+        "name": "FlareSolverr",
+        "category": "Tools",
+        "description": "Proxy server to bypass Cloudflare and DDoS-GUARD protection.",
+        "icon": "fa-shield-halved",
+        "logo_id": "flaresolverr",
+        "default_port": 8191,
+        "protected": True,
+        "manageable": False
+    },
+    # 7. Additional Store-Only Apps (Available for 1-Click Install)
+    {
+        "id": "qbittorrent",
+        "name": "qBittorrent",
+        "category": "Downloads",
+        "description": "Fast, lightweight BitTorrent client with Web UI and search engine.",
+        "icon": "fa-download",
+        "logo_id": "qbittorrent",
+        "image": "lscr.io/linuxserver/qbittorrent:latest",
+        "default_port": 8085,
+        "ports": {"8085": "8080", "6881": "6881"},
+        "volumes": ["/srv/mergerfs/MainPool/Downloads:/downloads", "/config/qbittorrent:/config"],
+        "env": ["PUID=1000", "PGID=1000", "WEBUI_PORT=8080"]
+    },
+    {
+        "id": "bazarr",
+        "name": "Bazarr",
+        "category": "Automation",
+        "description": "Companion to Sonarr and Radarr for automated subtitle management.",
+        "icon": "fa-closed-captioning",
+        "logo_id": "bazarr",
+        "image": "lscr.io/linuxserver/bazarr:latest",
+        "default_port": 6767,
+        "ports": {"6767": "6767"},
+        "volumes": ["/srv/mergerfs/MainPool/Phim:/movies", "/config/bazarr:/config"],
+        "env": ["PUID=1000", "PGID=1000"]
+    },
+    {
+        "id": "vaultwarden",
+        "name": "Vaultwarden",
+        "category": "Tools",
+        "description": "Lightweight Bitwarden-compatible password manager written in Rust.",
+        "icon": "fa-key",
+        "logo_id": "vaultwarden",
+        "image": "vaultwarden/server:latest",
+        "default_port": 8088,
+        "ports": {"8088": "80"},
+        "volumes": ["/config/vaultwarden:/data"],
+        "env": []
     }
 ]

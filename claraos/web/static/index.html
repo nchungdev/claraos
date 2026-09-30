@@ -867,6 +867,9 @@
       if (app.native) {
         statusEl.textContent = 'Core';
         statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300';
+      } else if (app.protected || app.manageable === false) {
+        statusEl.textContent = 'Hệ thống';
+        statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300';
       } else if (app.is_running) {
         statusEl.textContent = 'Đang chạy';
         statusEl.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
@@ -905,8 +908,10 @@
         `;
       }
 
-      // 2. Các hành động quản lý Docker
-      if (!app.native) {
+      // 2. Các hành động quản lý Docker (Ẩn hoàn toàn nếu app không có quyền quản lý hoặc là app hệ thống)
+      const canManage = !app.native && app.manageable !== false && !app.protected;
+
+      if (canManage) {
         if (app.is_running) {
           actionsHtml += `
             <button onclick="controlApp('${app.id}', 'restart'); closeContextMenu();" 
@@ -928,14 +933,6 @@
               <span>Khởi động</span>
             </button>
           `;
-        } else {
-          actionsHtml += `
-            <button onclick="controlApp('${app.id}', 'install'); closeContextMenu();" 
-                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition">
-              <i class="fa-solid fa-cloud-arrow-down text-cyan-400 w-4 text-center"></i>
-              <span>Cài đặt</span>
-            </button>
-          `;
         }
       }
 
@@ -949,8 +946,8 @@
         </button>
       `;
 
-      // 4. Gỡ cài đặt (nếu đã cài đặt và không phải native)
-      if (!app.native && app.installed) {
+      // 4. Gỡ cài đặt (CHỈ hiện khi app có quyền quản lý và đã cài đặt)
+      if (canManage && app.installed) {
         actionsHtml += `
           <div class="h-px bg-slate-800/80 my-1"></div>
           <button onclick="confirmUninstall('${app.id}', '${app.name}'); closeContextMenu();" 
@@ -1125,7 +1122,15 @@
       const grid = document.getElementById('app-catalog-grid');
       if (!grid) return;
 
-      grid.innerHTML = catalog.map(app => {
+      // Only display apps that are installed, running, or native on the desktop launcher
+      const desktopApps = catalog.filter(app => app.installed || app.native || app.is_running);
+
+      if (desktopApps.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="openAppStore()" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
+        return;
+      }
+
+      grid.innerHTML = desktopApps.map(app => {
         const appUrl = getAppUrl(app);
         const isNative = Boolean(app.native);
         const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
