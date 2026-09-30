@@ -691,15 +691,75 @@
       refreshCurrentTab();
     }
 
-    function launchApp(e, appId, isRunning, url, isNative) {
-      if (e.target.closest('button') || e.target.closest('a')) return;
+    function prewarmAppConnections(catalog) {
+      const host = window.location.hostname;
+      if (isLocalOrIp(host)) return;
+      const parts = host.split('.');
+      const baseDomain = parts.length > 2 ? parts.slice(-2).join('.') : host;
+
+      catalog.forEach(app => {
+        if (!app.native) {
+          const sub = app.subdomain || app.id;
+          const origin = `${window.location.protocol}//${sub}.${baseDomain}`;
+          
+          if (!document.querySelector(`link[rel="dns-prefetch"][href="${origin}"]`)) {
+            const dns = document.createElement('link');
+            dns.rel = 'dns-prefetch';
+            dns.href = origin;
+            document.head.appendChild(dns);
+          }
+
+          if (!document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) {
+            const preconnect = document.createElement('link');
+            preconnect.rel = 'preconnect';
+            preconnect.href = origin;
+            preconnect.crossOrigin = 'anonymous';
+            document.head.appendChild(preconnect);
+          }
+        }
+      });
+    }
+
+    function prewarmApp(url, isNative) {
+      if (isNative || !url || url.startsWith('/#')) return;
+      try {
+        const u = new URL(url);
+        const origin = u.origin;
+        if (!document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) {
+          const p = document.createElement('link');
+          p.rel = 'preconnect';
+          p.href = origin;
+          p.crossOrigin = 'anonymous';
+          document.head.appendChild(p);
+        }
+      } catch (e) {}
+    }
+
+    function handleAppClick(e, appId, isRunning, url, isNative) {
+      if (e.target.closest('#app-context-menu')) return;
+
       if (isNative) {
+        e.preventDefault();
         const targetTab = NATIVE_TAB_MAP[appId] || appId;
         switchTab(targetTab);
-      } else if (isRunning) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        controlApp(appId, 'start');
+        return;
+      }
+
+      if (!isRunning) {
+        e.preventDefault();
+        const spinner = document.getElementById(`launcher-spinner-${appId}`);
+        if (spinner) spinner.classList.remove('hidden');
+        controlApp(appId, 'start').finally(() => {
+          if (spinner) spinner.classList.add('hidden');
+        });
+        return;
+      }
+
+      // If running, provide instant tactile click feedback spinner on icon while opening in new tab
+      const spinner = document.getElementById(`launcher-spinner-${appId}`);
+      if (spinner) {
+        spinner.classList.remove('hidden');
+        setTimeout(() => { if (spinner) spinner.classList.add('hidden'); }, 1200);
       }
     }
 
@@ -1022,47 +1082,75 @@
       }
     });
 
-    async function loadAppCatalog() {
+    let appCatalogCache = null;
+
+    async function loadAppCatalog(force = false) {
       try {
+        if (!force && appCatalogCache && appCatalogCache.length > 0) {
+          renderAppCatalogGrid(appCatalogCache);
+          return;
+        }
         const res = await fetch('/api/modules/apps/catalog');
         const d = await res.json();
-        const grid = document.getElementById('app-catalog-grid');
+        appCatalogCache = d.catalog;
         d.catalog.forEach(app => { appCatalogMap[app.id] = app; });
+        renderAppCatalogGrid(d.catalog);
+        prewarmAppConnections(d.catalog);
+      } catch (e) {}
+    }
 
-        grid.innerHTML = d.catalog.map(app => {
-          const appUrl = getAppUrl(app);
-          return `
-            <div onclick="launchApp(event, '${app.id}', ${app.is_running}, '${appUrl}', ${Boolean(app.native)})"
-                 oncontextmenu="openAppContextMenu(event, '${app.id}')"
-                 class="flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-200 select-none w-28 sm:w-32 md:w-36"
-                 title="${app.name} (${appUrl})">
+    function renderAppCatalogGrid(catalog) {
+      const grid = document.getElementById('app-catalog-grid');
+      if (!grid) return;
+
+      grid.innerHTML = catalog.map(app => {
+        const appUrl = getAppUrl(app);
+        const isNative = Boolean(app.native);
+        const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
+        const href = isNative ? `#${targetTab}` : appUrl;
+        const targetAttr = isNative ? '' : 'target="_blank" rel="noopener noreferrer"';
+
+        return `
+          <a href="${href}"
+             ${targetAttr}
+             onclick="handleAppClick(event, '${app.id}', ${app.is_running}, '${appUrl}', ${isNative})"
+             oncontextmenu="openAppContextMenu(event, '${app.id}')"
+             onmouseenter="prewarmApp('${appUrl}', ${isNative})"
+             class="app-launcher-item flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-150 select-none w-28 sm:w-32 md:w-36 focus:outline-none"
+             title="${app.name} (${appUrl})">
+            
+            <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
+            <div class="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center">
               
-              <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
-              <div class="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center">
+              <!-- Squircle Icon Box -->
+              <div class="w-full h-full rounded-[24px] sm:rounded-[28px] md:rounded-[32px] bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border border-white/10 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] p-4 sm:p-5 md:p-6 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_15px_30px_rgba(6,182,212,0.2)] group-active:scale-95 transition-all duration-150 relative overflow-hidden">
+                <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
+                     alt="${app.name}" 
+                     loading="eager"
+                     decoding="async"
+                     class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-150 group-hover:scale-105"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl md:text-5xl\\'></i>';">
                 
-                <!-- Squircle Icon Box -->
-                <div class="w-full h-full rounded-[24px] sm:rounded-[28px] md:rounded-[32px] bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border border-white/10 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] p-4 sm:p-5 md:p-6 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_15px_30px_rgba(6,182,212,0.2)] group-active:scale-95 transition-all duration-200">
-                  <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
-                       alt="${app.name}" 
-                       class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-200 group-hover:scale-105"
-                       onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl md:text-5xl\\'></i>';">
+                <!-- Instant Click / Launching Spinner Overlay -->
+                <div id="launcher-spinner-${app.id}" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center text-cyan-400 transition-opacity">
+                  <i class="fa-solid fa-circle-notch fa-spin text-2xl sm:text-3xl"></i>
                 </div>
               </div>
-
-              <!-- App Label / Name (macOS SF Typography style) -->
-              <span class="font-medium text-xs sm:text-[13px] md:text-sm text-slate-100 mt-2.5 sm:mt-3 truncate w-full group-hover:text-cyan-300 transition text-center drop-shadow">
-                ${app.name}
-              </span>
-
             </div>
-          `;
-        }).join('');
-      } catch (e) {}
+
+            <!-- App Label / Name (macOS SF Typography style) -->
+            <span class="font-medium text-xs sm:text-[13px] md:text-sm text-slate-100 mt-2.5 sm:mt-3 truncate w-full group-hover:text-cyan-300 transition text-center drop-shadow">
+              ${app.name}
+            </span>
+
+          </a>
+        `;
+      }).join('');
     }
 
     async function controlApp(appId, action) {
       await fetch(`/api/modules/apps/${appId}/${action}`, { method: 'POST' });
-      loadAppCatalog();
+      await loadAppCatalog(true);
     }
 
     let pendingUninstallAppId = null;
