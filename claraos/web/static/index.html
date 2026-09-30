@@ -207,9 +207,9 @@
     </div>
 
     <!-- TAB: APPS & DOCKER -->
-    <div id="tab-apps" class="tab-pane p-6 space-y-4">
-      <!-- App Launcher Grid (OS Desktop Style) -->
-      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-y-10 gap-x-8 justify-items-center max-w-6xl mx-auto py-10 px-6">
+    <div id="tab-apps" class="tab-pane p-6 sm:p-10 space-y-4">
+      <!-- App Launcher Grid (macOS Launchpad / iPadOS Style) -->
+      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-y-10 sm:gap-y-12 gap-x-6 sm:gap-x-8 justify-items-center max-w-7xl mx-auto py-6 sm:py-10 px-2 sm:px-6">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
@@ -1034,23 +1034,23 @@
           return `
             <div onclick="launchApp(event, '${app.id}', ${app.is_running}, '${appUrl}', ${Boolean(app.native)})"
                  oncontextmenu="openAppContextMenu(event, '${app.id}')"
-                 class="flex flex-col items-center justify-center text-center relative group cursor-pointer p-2 transition-all duration-200 hover:-translate-y-2 select-none"
+                 class="flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-200 select-none w-28 sm:w-32 md:w-36"
                  title="${app.name} (${appUrl})">
               
-              <!-- App Icon Squircle Container -->
-              <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
+              <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
+              <div class="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center">
                 
                 <!-- Squircle Icon Box -->
-                <div class="w-full h-full rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-800/90 to-slate-900 border border-slate-700/50 shadow-xl shadow-black/50 p-4 sm:p-5 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-500/50 group-hover:shadow-cyan-500/20 transition-all duration-200">
+                <div class="w-full h-full rounded-[24px] sm:rounded-[28px] md:rounded-[32px] bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border border-white/10 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] p-4 sm:p-5 md:p-6 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_15px_30px_rgba(6,182,212,0.2)] group-active:scale-95 transition-all duration-200">
                   <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
                        alt="${app.name}" 
-                       class="w-full h-full object-contain filter drop-shadow-md"
-                       onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl\\'></i>';">
+                       class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-200 group-hover:scale-105"
+                       onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl md:text-5xl\\'></i>';">
                 </div>
               </div>
 
-              <!-- App Label / Name -->
-              <span class="font-semibold text-xs sm:text-sm text-slate-200 mt-3 truncate max-w-[110px] sm:max-w-[130px] group-hover:text-cyan-300 transition text-center">
+              <!-- App Label / Name (macOS SF Typography style) -->
+              <span class="font-medium text-xs sm:text-[13px] md:text-sm text-slate-100 mt-2.5 sm:mt-3 truncate w-full group-hover:text-cyan-300 transition text-center drop-shadow">
                 ${app.name}
               </span>
 
