@@ -84,17 +84,39 @@
     </div>
 
     <!-- System Status Footer -->
-    <div class="p-3 border-t border-slate-800/80 bg-slate-900/50">
-      <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span> Clara Core Active</span>
-        <span id="sys-uptime" class="font-mono">--:--</span>
+    <div class="p-3.5 border-t border-slate-800/80 bg-slate-900/60 space-y-2.5">
+      <!-- Status & Uptime -->
+      <div class="flex items-center justify-between text-xs text-slate-400">
+        <span class="flex items-center gap-1.5 font-medium"><span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span> Clara Core Active</span>
+        <span id="sys-uptime" class="font-mono text-[11px] text-slate-400">--:--</span>
       </div>
-      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-        <div id="sys-ram-bar" class="bg-purple-500 h-1.5 rounded-full" style="width: 0%"></div>
+
+      <!-- RAM Metric -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+          <span>RAM</span>
+          <span id="sys-ram-txt">--/--</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sys-ram-bar" class="bg-purple-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
       </div>
-      <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-        <span>RAM: <span id="sys-ram-txt">--</span></span>
-        <span>CPU: <span id="sys-cpu-txt">--</span></span>
+
+      <!-- Storage Pool (Ổ cứng) Metric -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><i class="fa-solid fa-hard-drive text-[9px] text-cyan-400"></i> Ổ cứng (Pool)</span>
+          <span id="sys-disk-txt">--/--</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sys-disk-bar" class="bg-cyan-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Line: Trống & CPU -->
+      <div class="flex justify-between text-[10px] text-slate-500 font-mono pt-0.5">
+        <span>Trống: <span id="sys-disk-free" class="text-slate-300 font-semibold">--</span></span>
+        <span>CPU: <span id="sys-cpu-txt" class="text-slate-300 font-semibold">--</span></span>
       </div>
     </div>
   </aside>
@@ -1180,9 +1202,29 @@
         const d = await res.json();
         const uptimeMin = Math.floor(d.uptime_seconds / 60);
         document.getElementById('sys-uptime').textContent = `${Math.floor(uptimeMin/60)}h ${uptimeMin%60}m`;
-        document.getElementById('sys-cpu-txt').textContent = `${d.cpu_percent}%`;
-        document.getElementById('sys-ram-txt').textContent = `${d.memory.used_gb}/${d.memory.total_gb}GB`;
+        document.getElementById('sys-cpu-txt').textContent = `${Math.round(d.cpu_percent)}%`;
+        document.getElementById('sys-ram-txt').textContent = `${d.memory.used_gb}/${d.memory.total_gb}GB (${Math.round(d.memory.percent)}%)`;
         document.getElementById('sys-ram-bar').style.width = `${d.memory.percent}%`;
+
+        if (d.disk) {
+          const usedStr = d.disk.used_human || `${d.disk.used_gb}GB`;
+          const totalStr = d.disk.total_human || `${d.disk.total_gb}GB`;
+          const freeStr = d.disk.free_human || `${d.disk.free_gb}GB`;
+          document.getElementById('sys-disk-txt').textContent = `${usedStr}/${totalStr} (${Math.round(d.disk.percent)}%)`;
+          document.getElementById('sys-disk-free').textContent = freeStr;
+          
+          const diskBar = document.getElementById('sys-disk-bar');
+          if (diskBar) {
+            diskBar.style.width = `${d.disk.percent}%`;
+            if (d.disk.percent >= 95) {
+              diskBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
+            } else if (d.disk.percent >= 85) {
+              diskBar.className = 'bg-amber-500 h-1.5 rounded-full transition-all duration-300';
+            } else {
+              diskBar.className = 'bg-cyan-500 h-1.5 rounded-full transition-all duration-300';
+            }
+          }
+        }
       } catch (e) {}
     }
 

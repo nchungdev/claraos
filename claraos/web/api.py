@@ -1,3 +1,4 @@
+import os
 import time
 import psutil
 from typing import Dict, Any
@@ -18,9 +19,28 @@ class ToggleModuleRequest(BaseModel):
 @router.get("/system/status")
 async def get_system_status():
     mem = psutil.virtual_memory()
-    disk = psutil.disk_usage("/")
     uptime_sec = int(time.time() - START_TIME)
-    
+
+    # Detect primary storage pool (/data or /srv/mergerfs/MainPool), fallback to root
+    storage_path = "/"
+    for path in ["/data", "/srv/mergerfs/MainPool", "/"]:
+        if os.path.exists(path):
+            storage_path = path
+            break
+
+    try:
+        disk = psutil.disk_usage(storage_path)
+    except Exception:
+        disk = psutil.disk_usage("/")
+        storage_path = "/"
+
+    def format_size(bytes_val: int) -> str:
+        tb = bytes_val / (1024**4)
+        if tb >= 1.0:
+            return f"{round(tb, 1)}TB"
+        gb = bytes_val / (1024**3)
+        return f"{round(gb, 1)}GB"
+
     return {
         "status": "healthy",
         "uptime_seconds": uptime_sec,
@@ -31,9 +51,14 @@ async def get_system_status():
             "percent": mem.percent
         },
         "disk": {
+            "path": storage_path,
             "total_gb": round(disk.total / (1024**3), 2),
+            "used_gb": round(disk.used / (1024**3), 2),
             "free_gb": round(disk.free / (1024**3), 2),
-            "percent": disk.percent
+            "percent": disk.percent,
+            "total_human": format_size(disk.total),
+            "used_human": format_size(disk.used),
+            "free_human": format_size(disk.free)
         },
         "modules": module_manager.list_modules()
     }
