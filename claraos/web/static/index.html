@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ClaraOS - The AI-Native Homelab Operating System</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2306b6d4'/%3E%3Cstop offset='100%25' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M16 6l8 4.6v9.2L16 24.4l-8-4.6v-9.2z' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M16 6v9.2m0 0l8 4.6m-8-4.6l-8 4.6' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='15.2' r='2' fill='%2338bdf8'/%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
@@ -273,92 +274,6 @@
       </div>
     </div>
 
-    <!-- TAB: SYNC -->
-    <div id="tab-sync" class="tab-pane hidden p-6 space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="glass-panel p-5 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
-          <div>
-            <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Tốc độ tải lên thực tế</div>
-            <div id="sync-speed-val" class="text-3xl font-extrabold text-white font-mono">0.00 MB/s</div>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-xl"><i class="fa-solid fa-bolt"></i></div>
-        </div>
-        <div class="glass-panel p-5 rounded-2xl flex items-center justify-between border-l-4 border-violet-500">
-          <div>
-            <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Tiến trình đồng bộ đang chạy</div>
-            <div id="sync-active-count" class="text-3xl font-extrabold text-white font-mono">0 Tasks</div>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 text-xl"><i class="fa-solid fa-list-check"></i></div>
-        </div>
-      </div>
-
-      <div class="glass-panel rounded-2xl overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-800/80 flex items-center justify-between">
-          <h2 class="font-semibold text-sm text-white flex items-center gap-2">
-            <i class="fa-solid fa-arrow-up-right-dots text-indigo-400"></i> Active Transfers & Tasks
-          </h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-400">
-            <thead class="text-xs uppercase bg-slate-900/40 text-slate-500 border-b border-slate-800">
-              <tr>
-                <th class="px-5 py-3">Task Name</th>
-                <th class="px-5 py-3">Type</th>
-                <th class="px-5 py-3">Speed</th>
-                <th class="px-5 py-3">RAM</th>
-                <th class="px-5 py-3">State</th>
-                <th class="px-5 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="sync-task-table" class="divide-y divide-slate-800/50">
-              <tr><td colspan="6" class="px-5 py-6 text-center text-slate-500">Scanning active Rclone tasks...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: ORGANIZER -->
-    <div id="tab-organizer" class="tab-pane hidden p-6 space-y-6">
-      <div class="glass-panel p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <h2 class="text-base font-bold text-white mb-1">Staging File Inspector</h2>
-          <p class="text-xs text-slate-400">Duyệt các file phim vừa tải về, tự động khớp TMDb và di chuyển vào thư viện chuẩn Plex/Jellyfin.</p>
-        </div>
-        <button onclick="loadOrganizerFiles()" class="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
-          <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Quét lại Staging
-        </button>
-      </div>
-
-      <div class="glass-panel rounded-2xl overflow-hidden">
-        <div id="organizer-file-list" class="divide-y divide-slate-800/60 p-4">
-          <div class="text-center py-8 text-slate-500 text-sm">Đang tải danh sách file staging...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: DEBRID -->
-    <div id="tab-debrid" class="tab-pane hidden p-6 space-y-6">
-      <div class="glass-panel p-5 rounded-2xl space-y-3">
-        <h2 class="text-base font-bold text-white">Thêm Magnet / Torrent Debrid</h2>
-        <div class="flex gap-2">
-          <input type="text" id="debrid-magnet-input" placeholder="magnet:?xt=urn:btih:... hoặc link download" class="flex-1 bg-slate-900/60 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
-          <button onclick="addDebridMagnet()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg transition">
-            <i class="fa-solid fa-plus mr-1"></i> Tải ngay
-          </button>
-        </div>
-      </div>
-
-      <div class="glass-panel rounded-2xl overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-800 flex justify-between items-center">
-          <h3 class="text-sm font-semibold text-white">Hàng đợi Debrid Cloud</h3>
-        </div>
-        <div id="debrid-torrent-list" class="p-4 space-y-3">
-          <div class="text-center py-8 text-slate-500 text-sm">Đang kết nối Torbox API...</div>
-        </div>
-      </div>
-    </div>
-
     <!-- TAB: SETTINGS & MODULE TOGGLE -->
     <div id="tab-settings" class="tab-pane hidden p-6 space-y-6">
       <div class="glass-panel p-6 rounded-2xl space-y-6">
@@ -613,12 +528,6 @@
     }
 
     const NATIVE_TAB_MAP = {
-      'media-organizer': 'organizer',
-      'cloud-sync': 'sync',
-      'debrid-ingest': 'debrid',
-      'organizer': 'organizer',
-      'sync': 'sync',
-      'debrid': 'debrid',
       'agents': 'agents',
       'settings': 'settings'
     };
@@ -695,108 +604,6 @@
         headerActionsHtml: `
           <button onclick="renderStoreItems()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
             <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới Store
-          </button>
-        `
-      },
-      organizer: {
-        title: 'Media Organizer',
-        subtitle: 'TMDb & Library Auto',
-        icon: 'fa-film',
-        iconGradient: 'from-pink-600 to-rose-500 shadow-pink-500/30',
-        docTitle: 'Media Organizer - ClaraOS',
-        headerTitle: 'Media Organizer',
-        badgeText: 'TMDb Scraper Active',
-        badgeClass: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
-        navHtml: `
-          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
-            <i class="fa-solid fa-arrow-left text-pink-400"></i>
-            <span>← Quay về ClaraOS</span>
-          </a>
-          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-pink-400 uppercase tracking-wider">Media Organizer</div>
-          <a href="#staging" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
-            <i class="fa-solid fa-folder-tree text-pink-400 w-5 text-center"></i>
-            <span>Duyệt Staging</span>
-          </a>
-          <a href="#tmdb" onclick="loadOrganizerFiles();" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
-            <i class="fa-solid fa-wand-magic-sparkles text-pink-400 w-5 text-center"></i>
-            <span>Quét & Khớp TMDb</span>
-          </a>
-          <div class="pt-4 border-t border-slate-800/60 mt-4 px-3">
-            <span class="text-[11px] text-slate-500 block mb-1">Thư mục Staging:</span>
-            <span class="text-[10px] text-slate-400 font-mono break-all bg-slate-900/60 p-2 rounded-lg border border-slate-800 block">/srv/mergerfs/MainPool/Phim/_staging</span>
-          </div>
-        `,
-        headerActionsHtml: `
-          <button onclick="loadOrganizerFiles()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-pink-600 hover:bg-pink-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-pink-600/20">
-            <i class="fa-solid fa-arrows-rotate"></i>
-            <span>Quét Staging</span>
-          </button>
-          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-house text-slate-400"></i> OS Home
-          </button>
-        `
-      },
-      sync: {
-        title: 'Cloud Sync Pro',
-        subtitle: 'Rclone VFS Engine',
-        icon: 'fa-cloud-arrow-up',
-        iconGradient: 'from-indigo-600 to-cyan-500 shadow-indigo-500/30',
-        docTitle: 'Cloud Sync Pro - ClaraOS',
-        headerTitle: 'Cloud Sync Pro',
-        badgeText: 'Linux /proc I/O Active',
-        badgeClass: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
-        navHtml: `
-          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
-            <i class="fa-solid fa-arrow-left text-indigo-400"></i>
-            <span>← Quay về ClaraOS</span>
-          </a>
-          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">Cloud Sync Pro</div>
-          <a href="#transfers" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
-            <i class="fa-solid fa-arrow-up-right-dots text-indigo-400 w-5 text-center"></i>
-            <span>Active Transfers</span>
-          </a>
-          <div class="pt-4 border-t border-slate-800/60 mt-4 px-3">
-            <span class="text-[11px] text-slate-500 block mb-1">VFS Storage Pool:</span>
-            <span class="text-[10px] text-slate-400 font-mono break-all bg-slate-900/60 p-2 rounded-lg border border-slate-800 block">/srv/mergerfs/MainPool</span>
-          </div>
-        `,
-        headerActionsHtml: `
-          <button onclick="loadSyncStats()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
-            <i class="fa-solid fa-rotate"></i>
-            <span>Làm mới I/O</span>
-          </button>
-          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-house text-slate-400"></i> OS Home
-          </button>
-        `
-      },
-      debrid: {
-        title: 'Debrid Ingestion',
-        subtitle: 'Torbox Cloud Cache',
-        icon: 'fa-download',
-        iconGradient: 'from-emerald-600 to-teal-500 shadow-emerald-500/30',
-        docTitle: 'Debrid Ingestion - ClaraOS',
-        headerTitle: 'Debrid Ingestion',
-        badgeText: 'Torbox Ready',
-        badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-        navHtml: `
-          <a href="#apps" onclick="switchTab('apps'); return false;" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition mb-3 border border-slate-800">
-            <i class="fa-solid fa-arrow-left text-emerald-400"></i>
-            <span>← Quay về ClaraOS</span>
-          </a>
-          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Debrid Ingestion</div>
-          <a href="#queue" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 transition">
-            <i class="fa-solid fa-list-check text-emerald-400 w-5 text-center"></i>
-            <span>Hàng đợi Cloud</span>
-          </a>
-          <a href="#add" onclick="document.getElementById('debrid-magnet-input')?.focus();" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
-            <i class="fa-solid fa-magnet text-emerald-400 w-5 text-center"></i>
-            <span>Thêm Magnet/Link</span>
-          </a>
-        `,
-        headerActionsHtml: `
-          <button onclick="switchTab('apps')" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-house text-slate-400"></i> OS Home
           </button>
         `
       },
@@ -1702,36 +1509,6 @@
       } catch (e) {}
     }
 
-    async function controlSyncTask(pid, action) {
-      await fetch(`/api/modules/sync/tasks/${pid}/${action}`, { method: 'POST' });
-      loadSyncStats();
-    }
-
-    async function loadOrganizerFiles() {
-      try {
-        const res = await fetch('/api/modules/organizer/files');
-        const d = await res.json();
-        document.getElementById('badge-organizer-count').textContent = d.count;
-        const box = document.getElementById('organizer-file-list');
-        if (d.files.length === 0) {
-          box.innerHTML = '<div class="text-center py-8 text-slate-500 text-sm">Thư mục Staging trống. Không có file cần xử lý.</div>';
-          return;
-        }
-        box.innerHTML = d.files.map(f => `
-          <div class="flex items-center justify-between p-3 hover:bg-slate-800/40 rounded-xl transition">
-            <div class="flex items-center gap-3">
-              <i class="fa-solid fa-file-video text-pink-400 text-lg"></i>
-              <div>
-                <div class="text-sm font-medium text-slate-200">${f.name}</div>
-                <div class="text-xs text-slate-500 font-mono">${f.size_human}</div>
-              </div>
-            </div>
-            <button class="px-3 py-1.5 bg-slate-800 hover:bg-pink-600/30 text-pink-300 text-xs rounded-lg transition">Khớp TMDb</button>
-          </div>
-        `).join('');
-      } catch (e) {}
-    }
-
     async function loadSettings() {
       try {
         const res = await fetch('/api/modules');
@@ -1780,25 +1557,19 @@
     function refreshCurrentTab() {
       if (currentTab === 'apps') loadAppCatalog();
       else if (currentTab === 'store') { loadAppCatalog().then(renderStoreItems); }
-      else if (currentTab === 'sync') loadSyncStats();
-      else if (currentTab === 'organizer') loadOrganizerFiles();
       else if (currentTab === 'settings') loadSettings();
     }
 
     // Polling loops
     setInterval(updateSystemStatus, 3000);
-    setInterval(() => {
-      if (currentTab === 'sync') loadSyncStats();
-    }, 2000);
 
     // Initial boot
     updateSystemStatus();
     loadAppCatalog();
-    loadSyncStats();
     loadSettings();
     updateNavigationVisibility();
 
-    // Hash routing: #apps (default), #sync, #organizer, #debrid, #agents, #settings
+    // Hash routing: #apps (default), #store, #agents, #settings
     const initialRaw = window.location.hash.replace('#', '');
     const initialTab = NATIVE_TAB_MAP[initialRaw] || initialRaw;
     if (initialTab && document.getElementById(`tab-${initialTab}`)) {
