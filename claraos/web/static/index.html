@@ -426,7 +426,7 @@
         const d = await res.json();
         const grid = document.getElementById('app-catalog-grid');
         grid.innerHTML = d.catalog.map(app => `
-          <div class="glass-panel rounded-2xl p-3.5 flex flex-col justify-between items-center text-center relative border ${app.is_running ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : 'border-slate-800/80 hover:border-slate-700'} transition-all duration-200 hover:-translate-y-1 hover:shadow-xl group aspect-[2/3]">
+          <div class="bg-slate-900/60 hover:bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 flex flex-col justify-between items-center text-center relative border-0 shadow-lg shadow-black/30 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl group aspect-[2/3]">
             
             <!-- TOP SECTION: App Logo & Status Bar -->
             <div class="w-full flex-1 flex flex-col items-center justify-center relative min-h-0 pt-1">
@@ -444,12 +444,12 @@
                 ` : '<span class="w-6 h-6"></span>'}
               </div>
 
-              <!-- Top: App Logo -->
-              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900 border border-slate-700/60 shadow-xl shadow-black/40 p-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200 mt-5">
+              <!-- Top: App Logo (Larger size) -->
+              <div class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-3xl bg-slate-800/50 p-3.5 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-xl shadow-black/40 mt-4">
                 <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.id}.png" 
                      alt="${app.name}" 
-                     class="w-full h-full object-contain filter drop-shadow"
-                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl\\'></i>';">
+                     class="w-full h-full object-contain filter drop-shadow-md"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-4xl sm:text-5xl\\'></i>';">
               </div>
             </div>
 
