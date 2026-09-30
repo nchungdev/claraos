@@ -4,7 +4,7 @@ services:
     container_name: claraos
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8090:8080"
     environment:
       - PUID=1000
       - PGID=1000
