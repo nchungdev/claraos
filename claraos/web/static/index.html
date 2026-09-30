@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherBox - All-In-One Homelab Engine</title>
+  <title>ClaraOS - The AI-Native Homelab Operating System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
@@ -12,7 +12,7 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+            brand: { 50: '#eef2ff', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' },
             dark: { 800: '#1e293b', 850: '#151f30', 900: '#0f172a' }
           }
         }
@@ -23,7 +23,7 @@
     body { background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
     .glass-sidebar { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border-right: 1px solid rgba(255, 255, 255, 0.08); }
-    .nav-item.active { background: rgba(99, 102, 241, 0.15); border-left: 3px solid #6366f1; color: #a5b4fc; }
+    .nav-item.active { background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6; color: #c4b5fd; }
     .nav-item:hover:not(.active) { background: rgba(255, 255, 255, 0.04); }
   </style>
 </head>
@@ -31,14 +31,17 @@
 
   <!-- SIDEBAR (AriaNg Style) -->
   <aside id="sidebar" class="glass-sidebar w-64 flex flex-col justify-between transition-all duration-300 z-30 shrink-0">
-    <div>
+    <div class="overflow-y-auto">
       <!-- Brand Header -->
       <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-            <i class="fa-solid fa-cube text-lg"></i>
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30">
+            <i class="fa-solid fa-brain text-lg"></i>
           </div>
-          <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">AetherBox</span>
+          <div>
+            <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white via-purple-200 to-slate-400 bg-clip-text text-transparent">ClaraOS</span>
+            <span class="text-[9px] uppercase tracking-wider block font-semibold text-purple-400 -mt-1">AI Homelab OS</span>
+          </div>
         </div>
         <button id="toggle-sidebar" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
           <i class="fa-solid fa-bars-staggered"></i>
@@ -47,10 +50,24 @@
 
       <!-- Navigation Tabs -->
       <nav class="p-3 space-y-1" id="nav-list">
-        <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Modules</div>
         
-        <!-- Cloud Sync Tab -->
-        <a href="#sync" data-tab="sync" class="nav-item active flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 transition group">
+        <!-- SECTION: AI AGENTS -->
+        <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-purple-400/80 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> AI & Agents
+        </div>
+
+        <a href="#agents" data-tab="agents" class="nav-item active flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 transition group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
+            <span>Agent Studio</span>
+          </div>
+          <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AGY/Claude</span>
+        </a>
+
+        <!-- SECTION: MEDIA & CLOUD -->
+        <div class="px-3 pt-3 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Media & Sync</div>
+
+        <a href="#sync" data-tab="sync" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
           <div class="flex items-center gap-3">
             <i class="fa-solid fa-cloud-arrow-up text-indigo-400 w-5 text-center"></i>
             <span>Cloud Sync</span>
@@ -58,16 +75,14 @@
           <span id="badge-sync-speed" class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-mono">0 MB/s</span>
         </a>
 
-        <!-- Media Organizer Tab -->
         <a href="#organizer" data-tab="organizer" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
           <div class="flex items-center gap-3">
-            <i class="fa-solid fa-film text-purple-400 w-5 text-center"></i>
+            <i class="fa-solid fa-film text-pink-400 w-5 text-center"></i>
             <span>Organizer</span>
           </div>
           <span id="badge-organizer-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">--</span>
         </a>
 
-        <!-- Debrid Ingest Tab -->
         <a href="#debrid" data-tab="debrid" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
           <div class="flex items-center gap-3">
             <i class="fa-solid fa-download text-emerald-400 w-5 text-center"></i>
@@ -76,9 +91,17 @@
           <span id="badge-debrid-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">--</span>
         </a>
 
-        <div class="pt-4 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">System</div>
+        <!-- SECTION: APPS & SYSTEM -->
+        <div class="px-3 pt-3 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ecosystem</div>
 
-        <!-- Settings Tab -->
+        <a href="#apps" data-tab="apps" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-puzzle-piece text-cyan-400 w-5 text-center"></i>
+            <span>App Store & Docker</span>
+          </div>
+          <span id="badge-apps-count" class="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">1-Click</span>
+        </a>
+
         <a href="#settings" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition">
           <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
           <span>Settings & Modules</span>
@@ -89,11 +112,11 @@
     <!-- System Status Footer -->
     <div class="p-3 border-t border-slate-800/80 bg-slate-900/50">
       <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Core Active</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span> Clara Core Active</span>
         <span id="sys-uptime" class="font-mono">--:--</span>
       </div>
       <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-        <div id="sys-ram-bar" class="bg-indigo-500 h-1.5 rounded-full" style="width: 0%"></div>
+        <div id="sys-ram-bar" class="bg-purple-500 h-1.5 rounded-full" style="width: 0%"></div>
       </div>
       <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
         <span>RAM: <span id="sys-ram-txt">--</span></span>
@@ -107,8 +130,8 @@
     <!-- Top Navbar -->
     <header class="h-16 glass-panel border-x-0 border-t-0 flex items-center justify-between px-6 shrink-0 sticky top-0 z-20">
       <div class="flex items-center gap-3">
-        <h1 id="page-title" class="text-lg font-bold text-white">Cloud Sync Pro</h1>
-        <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Running</span>
+        <h1 id="page-title" class="text-lg font-bold text-white">Clara AI Agent Studio</h1>
+        <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Active</span>
       </div>
       <div class="flex items-center gap-3">
         <button onclick="refreshCurrentTab()" class="px-3 py-1.5 text-xs font-medium rounded-lg glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
@@ -117,8 +140,114 @@
       </div>
     </header>
 
+    <!-- TAB: AGENTS STUDIO -->
+    <div id="tab-agents" class="tab-pane p-6 space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Agent Selector & Controls -->
+        <div class="space-y-4">
+          <div class="glass-panel p-5 rounded-2xl space-y-4 border-l-4 border-purple-500">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-microchip text-purple-400"></i> Chọn Coding Agent
+            </h2>
+            <div class="space-y-2" id="agent-engine-selector">
+              <label class="flex items-center justify-between p-3 rounded-xl border border-purple-500/40 bg-purple-500/10 cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="agent_choice" value="antigravity" checked class="text-purple-600 focus:ring-purple-500">
+                  <div>
+                    <div class="text-sm font-bold text-white">Google Antigravity (AGY)</div>
+                    <div class="text-[11px] text-slate-400">Gemini 2.5 Pro / Flash • Tool Execution</div>
+                  </div>
+                </div>
+                <span class="text-xs text-emerald-400 font-mono font-medium">Ready</span>
+              </label>
+
+              <label class="flex items-center justify-between p-3 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-800/40 cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <input type="radio" name="agent_choice" value="claude" class="text-purple-600 focus:ring-purple-500">
+                  <div>
+                    <div class="text-sm font-bold text-white">Anthropic Claude Code</div>
+                    <div class="text-[11px] text-slate-400">Claude 3.7 Sonnet • Deep Reasoning</div>
+                  </div>
+                </div>
+                <span class="text-xs text-indigo-400 font-mono font-medium">Standby</span>
+              </label>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Thư mục Workspace (Cwd):</label>
+              <input type="text" id="agent-workspace-input" value="/home/chungnh/AI Workspace" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-purple-500">
+            </div>
+          </div>
+
+          <!-- Token Quotas Card -->
+          <div class="glass-panel p-5 rounded-2xl space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hạn mức Token & Quotas</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+                <span class="text-slate-300">Gemini 2.5 Flash</span>
+                <span class="text-emerald-400 font-mono font-bold">100%</span>
+              </div>
+              <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+                <span class="text-slate-300">Gemini 2.5 Pro</span>
+                <span class="text-emerald-400 font-mono font-bold">85%</span>
+              </div>
+              <div class="flex justify-between items-center py-1">
+                <span class="text-slate-300">Claude 3.7 Sonnet</span>
+                <span class="text-purple-400 font-mono font-bold">90%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Prompt & Terminal / Output -->
+        <div class="lg:col-span-2 glass-panel p-5 rounded-2xl flex flex-col justify-between h-[650px]">
+          <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-purple-400"></i> Agent Session Output
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">Stream: Live</span>
+          </div>
+
+          <!-- Output Console -->
+          <div id="agent-console" class="flex-1 my-3 bg-slate-950/80 rounded-xl p-4 font-mono text-xs text-slate-300 overflow-y-auto space-y-2 border border-slate-800/80">
+            <div class="text-purple-400">🌌 ClaraOS Agent Hub initialized. Sẵn sàng nhận lệnh điều khiển Antigravity hoặc Claude Code...</div>
+          </div>
+
+          <!-- Prompt Box -->
+          <div class="space-y-2 pt-2">
+            <div class="flex gap-2">
+              <input type="text" id="agent-prompt-input" placeholder="Nhập yêu cầu cho AI Agent (Ví dụ: Kiểm tra tiến trình rclone, audit code, tối ưu database)..." class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500">
+              <button onclick="sendAgentPrompt()" class="px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-xl shadow-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> Gửi lệnh
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB: APPS & DOCKER -->
+    <div id="tab-apps" class="tab-pane hidden p-6 space-y-6">
+      <div class="glass-panel p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white mb-1">1-Click Docker App Store</h2>
+          <p class="text-xs text-slate-400">Dễ dàng cài đặt và quản lý Plex, *Arr stack, Komga, MeTube và các công cụ homelab phổ biến độc lập qua Docker.</p>
+        </div>
+        <button onclick="loadAppCatalog()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
+          <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Cập nhật trạng thái
+        </button>
+      </div>
+
+      <!-- App Grid -->
+      <div id="app-catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách App Store...</div>
+      </div>
+    </div>
+
     <!-- TAB: SYNC -->
-    <div id="tab-sync" class="tab-pane p-6 space-y-6">
+    <div id="tab-sync" class="tab-pane hidden p-6 space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="glass-panel p-5 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
           <div>
@@ -136,7 +265,6 @@
         </div>
       </div>
 
-      <!-- Active Transfers List -->
       <div class="glass-panel rounded-2xl overflow-hidden">
         <div class="px-5 py-4 border-b border-slate-800/80 flex items-center justify-between">
           <h2 class="font-semibold text-sm text-white flex items-center gap-2">
@@ -170,7 +298,7 @@
           <h2 class="text-base font-bold text-white mb-1">Staging File Inspector</h2>
           <p class="text-xs text-slate-400">Duyệt các file phim vừa tải về, tự động khớp TMDb và di chuyển vào thư viện chuẩn Plex/Jellyfin.</p>
         </div>
-        <button onclick="loadOrganizerFiles()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
+        <button onclick="loadOrganizerFiles()" class="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
           <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Quét lại Staging
         </button>
       </div>
@@ -221,7 +349,7 @@
   </main>
 
   <script>
-    let currentTab = 'sync';
+    let currentTab = 'agents';
 
     // Navigation switching
     document.querySelectorAll('#nav-list a').forEach(item => {
@@ -243,6 +371,8 @@
       if (activePane) activePane.classList.remove('hidden');
 
       const titles = {
+        agents: 'Clara AI Agent Studio',
+        apps: '1-Click App Store & Docker',
         sync: 'Cloud Sync Pro',
         organizer: 'Media Organizer',
         debrid: 'Debrid Ingestion',
@@ -250,6 +380,79 @@
       };
       document.getElementById('page-title').textContent = titles[tab] || 'Dashboard';
       refreshCurrentTab();
+    }
+
+    async function sendAgentPrompt() {
+      const input = document.getElementById('agent-prompt-input');
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      const consoleBox = document.getElementById('agent-console');
+      const selectedEngine = document.querySelector('input[name="agent_choice"]:checked')?.value || 'antigravity';
+      const workspace = document.getElementById('agent-workspace-input').value;
+
+      consoleBox.innerHTML += `<div class="text-white mt-2 font-bold">User: ${prompt}</div>`;
+      consoleBox.innerHTML += `<div class="text-purple-300 animate-pulse">Running ${selectedEngine} in ${workspace}...</div>`;
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+      input.value = '';
+
+      try {
+        const res = await fetch('/api/modules/agents/prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ engine: selectedEngine, prompt: prompt, workspace: workspace })
+        });
+        const d = await res.json();
+        consoleBox.innerHTML += `<div class="text-emerald-400 whitespace-pre-wrap">${d.output}</div>`;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+      } catch (e) {
+        consoleBox.innerHTML += `<div class="text-rose-400">Error executing agent: ${e.message}</div>`;
+      }
+    }
+
+    async function loadAppCatalog() {
+      try {
+        const res = await fetch('/api/modules/apps/catalog');
+        const d = await res.json();
+        const grid = document.getElementById('app-catalog-grid');
+        grid.innerHTML = d.catalog.map(app => `
+          <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between border ${app.is_running ? 'border-emerald-500/30' : 'border-slate-800'}">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 text-lg">
+                  <i class="fa-solid ${app.icon}"></i>
+                </div>
+                <span class="px-2.5 py-0.5 text-[11px] rounded-full font-mono font-medium ${app.is_running ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'}">
+                  ${app.is_running ? '🟢 Running' : (app.installed ? '⚪ Stopped' : 'Not Installed')}
+                </span>
+              </div>
+              <h3 class="font-bold text-base text-white">${app.name}</h3>
+              <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">${app.description}</p>
+            </div>
+            
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-500">Port ${app.default_port}</span>
+              <div class="space-x-2">
+                ${app.installed ? `
+                  ${app.is_running ? `
+                    <button onclick="controlApp('${app.id}', 'stop')" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-medium rounded-lg transition">Stop</button>
+                    <a href="http://${window.location.hostname}:${app.default_port}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition">Open</a>
+                  ` : `
+                    <button onclick="controlApp('${app.id}', 'start')" class="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg transition">Start</button>
+                  `}
+                ` : `
+                  <button onclick="controlApp('${app.id}', 'install')" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition">1-Click Install</button>
+                `}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function controlApp(appId, action) {
+      await fetch(`/api/modules/apps/${appId}/${action}`, { method: 'POST' });
+      loadAppCatalog();
     }
 
     async function updateSystemStatus() {
@@ -327,13 +530,13 @@
         box.innerHTML = d.files.map(f => `
           <div class="flex items-center justify-between p-3 hover:bg-slate-800/40 rounded-xl transition">
             <div class="flex items-center gap-3">
-              <i class="fa-solid fa-file-video text-purple-400 text-lg"></i>
+              <i class="fa-solid fa-file-video text-pink-400 text-lg"></i>
               <div>
                 <div class="text-sm font-medium text-slate-200">${f.name}</div>
                 <div class="text-xs text-slate-500 font-mono">${f.size_human}</div>
               </div>
             </div>
-            <button class="px-3 py-1.5 bg-slate-800 hover:bg-purple-600/30 text-purple-300 text-xs rounded-lg transition">Khớp TMDb</button>
+            <button class="px-3 py-1.5 bg-slate-800 hover:bg-pink-600/30 text-pink-300 text-xs rounded-lg transition">Khớp TMDb</button>
           </div>
         `).join('');
       } catch (e) {}
@@ -350,7 +553,7 @@
               <span class="font-bold text-sm text-white">${m.title}</span>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" onchange="toggleModule('${m.name}', this.checked)" ${m.enabled ? 'checked' : ''} class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
               </label>
             </div>
             <p class="text-xs text-slate-400 mb-3">${m.description}</p>
@@ -385,7 +588,8 @@
     }
 
     function refreshCurrentTab() {
-      if (currentTab === 'sync') loadSyncStats();
+      if (currentTab === 'apps') loadAppCatalog();
+      else if (currentTab === 'sync') loadSyncStats();
       else if (currentTab === 'organizer') loadOrganizerFiles();
       else if (currentTab === 'settings') loadSettings();
     }
@@ -398,6 +602,7 @@
 
     // Initial boot
     updateSystemStatus();
+    loadAppCatalog();
     loadSyncStats();
     loadSettings();
     updateNavigationVisibility();

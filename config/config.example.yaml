@@ -8,24 +8,16 @@ system:
 
 # Dynamic Pluggable Modules
 modules:
-  # 📥 Module 1: Ingestion & Debrid (Torbox / Aria2 / RealDebrid)
-  debrid:
+  # 🤖 Module 1: AI Agent Studio (Antigravity & Claude Code)
+  agents:
     enabled: true
-    provider: "torbox"
-    api_key: ""
-    download_dir: "/data/downloads"
-    poll_interval: 15
-    auto_clean: true
+    default_engine: "antigravity"
+    default_workspace: "/home/chungnh/AI Workspace"
 
-  # 🎬 Module 2: Media Organizer & TMDb Scraper
-  organizer:
+  # 🧩 Module 2: 1-Click App Store & Docker Manager
+  apps:
     enabled: true
-    staging_dir: "/data/staging"
-    movies_dir: "/data/media/Movies"
-    tv_dir: "/data/media/TV Shows"
-    tmdb_api_key: ""
-    language: "vi-VN"
-    auto_organize: false
+    docker_socket: "/var/run/docker.sock"
 
   # 🚀 Module 3: Cloud Sync & Rclone Bandwidth Throttle
   sync:
@@ -36,3 +28,22 @@ modules:
     max_bandwidth_mbps: 100
     rclone_rc_url: "http://127.0.0.1:5572"
     poll_interval: 2
+
+  # 🎬 Module 4: Media Organizer & TMDb Scraper
+  organizer:
+    enabled: true
+    staging_dir: "/data/staging"
+    movies_dir: "/data/media/Movies"
+    tv_dir: "/data/media/TV Shows"
+    tmdb_api_key: ""
+    language: "vi-VN"
+    auto_organize: false
+
+  # 📥 Module 5: Ingestion & Debrid (Torbox / Aria2 / RealDebrid)
+  debrid:
+    enabled: true
+    provider: "torbox"
+    api_key: ""
+    download_dir: "/data/downloads"
+    poll_interval: 15
+    auto_clean: true

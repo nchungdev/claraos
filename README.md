@@ -1,40 +1,49 @@
-# 🌌 AetherBox
+# 🧠 ClaraOS
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Architecture-Modular%20Monolith-indigo?style=for-the-badge" alt="Architecture">
+  <img src="https://img.shields.io/badge/Architecture-Modular%20Monolith-purple?style=for-the-badge" alt="Architecture">
+  <img src="https://img.shields.io/badge/AI%20Engines-Antigravity%20%7C%20Claude-indigo?style=for-the-badge" alt="AI Engines">
   <img src="https://img.shields.io/badge/Container-Single%20Container-emerald?style=for-the-badge" alt="Single Container">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
 </p>
 
-> **AetherBox** is an all-in-one, modular media ingestion, debrid caching, and cloud sync engine designed for self-hosters and homelab enthusiasts running Plex, Jellyfin, or Emby.
+> **ClaraOS** is the open-source, AI-native homelab operating system and orchestration engine. It unifies **Coding AI Agents (Google Antigravity & Claude Code)**, **1-Click Docker App Store (Plex, *Arr stack)**, **Media Ingestion (Debrid/TMDb)**, and **Cloud Sync Acceleration** into a single, cohesive, web-based dashboard.
 
 ---
 
-## ✨ Features & Architecture
+## ✨ Modular Architecture
 
-AetherBox is packaged as a **single lightweight Docker container**, built on top of a **Modular Monolith** architecture. Each module can be independently enabled or disabled at installation time or dynamically toggled via the Web UI at runtime:
+ClaraOS runs as a **single, ultra-lightweight Docker container** (~120MB) utilizing an asynchronous **Modular Monolith** pattern. Any module can be turned on or off at installation or dynamically toggled via the Web UI at runtime without restarting the container:
 
-- 🚀 **Cloud Sync Pro (`mod_sync`):**
-  - Real-time Rclone process telemetry directly from Linux `/proc`.
-  - Zero-lag delta upload speed calculations.
-  - Active task governance (`SIGSTOP` pause, `SIGCONT` resume, `SIGTERM` stop).
-  - VFS mount inspection and dynamic bandwidth control.
+### 1. 🤖 Clara AI Agent Studio (`mod_agents`)
+- **Universal Multi-Agent Hub:** Seamlessly execute and monitor tasks across **Google Antigravity (`agy`)**, **Anthropic Claude Code (`claude`)**, and Codex from one intuitive Web GUI.
+- **Quota Tracking:** Real-time token monitoring for Gemini 2.5 Flash/Pro and Claude 3.7 Sonnet.
+- **Agentic SRE:** Let AI diagnose container crashloops, tune Rclone transfers, or organize incoming media via natural language.
 
-- 🎬 **Media Organizer (`mod_organizer`):**
-  - Automated Staging folder inspector.
-  - TMDb metadata search & resolver.
-  - Standardized Plex/Jellyfin naming convention builder (`Movie (Year)` & `Show/Season XX/Show - SxxExx`).
-  - Atomic hardlinking/moving into your storage pool (MergerFS / NAS).
+### 2. 🧩 1-Click Docker App Store (`mod_apps`)
+- **Native Docker Socket Integration:** Discovers and controls upstream containers on your host via `/var/run/docker.sock`.
+- **Pre-configured Catalog:** 1-Click deploy, start, stop, and restart:
+  - **Media:** Plex Media Server, Jellyfin, Jellyseerr
+  - **Automation:** Sonarr, Radarr, Prowlarr
+  - **Reading & Tools:** Komga, Kavita, MeTube, FileBrowser, Tdarr
+- **Zero Bloat:** Third-party apps run as independent official containers; ClaraOS itself remains clean and lightweight.
 
-- 📥 **Debrid Ingest (`mod_debrid`):**
-  - Torbox & Debrid cloud downloader integration.
-  - Instant magnet & torrent ingestion pipeline.
-  - Automated bridging into local staging directories.
+### 3. 🚀 Cloud Sync Pro (`mod_sync`)
+- Real-time Rclone process telemetry directly from Linux `/proc`.
+- Zero-lag delta upload speed calculations.
+- Active task governance (`SIGSTOP` pause, `SIGCONT` resume, `SIGTERM` stop).
+- VFS mount inspection and dynamic bandwidth control.
 
-- 🎨 **AriaNg-Inspired Web Dashboard:**
-  - Modern, responsive dark mode with glassmorphism aesthetics.
-  - Collapsible sidebar with real-time badges (speed, file counts, system health).
-  - Dynamic navigation tabs based on which modules are enabled.
+### 4. 🎬 Media Organizer (`mod_organizer`)
+- Automated Staging folder inspector.
+- TMDb metadata search & resolver.
+- Standardized Plex/Jellyfin naming convention builder (`Movie (Year)` & `Show/Season XX/Show - SxxExx`).
+- Atomic hardlinking/moving into your storage pool (MergerFS / NAS).
+
+### 5. 📥 Debrid Ingest (`mod_debrid`)
+- Torbox & Debrid cloud downloader integration.
+- Instant magnet & torrent ingestion pipeline.
+- Automated bridging into local staging directories.
 
 ---
 
@@ -44,9 +53,9 @@ Save this as `docker-compose.yml`:
 
 ```yaml
 services:
-  aetherbox:
-    image: ghcr.io/nchungdev/aetherbox:latest
-    container_name: aetherbox
+  claraos:
+    image: ghcr.io/nchungdev/claraos:latest
+    container_name: claraos
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -55,14 +64,18 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
       # Choose which modules to enable on startup:
-      - MODULE_DEBRID_ENABLED=true
-      - MODULE_ORGANIZER_ENABLED=true
+      - MODULE_AGENTS_ENABLED=true
+      - MODULE_APPS_ENABLED=true
       - MODULE_SYNC_ENABLED=true
+      - MODULE_ORGANIZER_ENABLED=true
+      - MODULE_DEBRID_ENABLED=true
     volumes:
       - ./config:/config
       - /mnt/storage:/data
-      # Mount host /proc for Rclone process inspection:
+      # Host proc for Rclone telemetry:
       - /proc:/proc:ro
+      # Host Docker socket for 1-Click App Store:
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 Run:
@@ -75,10 +88,10 @@ Open `http://localhost:8080` in your browser.
 
 ## ⚙️ Module Dynamic Toggling
 
-You don't need to restart the container to enable or disable features.
+No container restart needed:
 1. Navigate to **Settings & Modules** in the sidebar.
-2. Toggle any module switch on or off.
-3. The background worker will gracefully start or stop, and the navigation sidebar will immediately update!
+2. Toggle any module on or off.
+3. Background workers instantly spin up or terminate, and the navigation sidebar updates automatically in real-time.
 
 ---
 

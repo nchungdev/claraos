@@ -7,42 +7,46 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import config
 from .core.module_manager import module_manager
+from .modules.agents.module import AgentsModule
 from .modules.sync.module import SyncModule
 from .modules.organizer.module import OrganizerModule
 from .modules.debrid.module import DebridModule
+from .modules.apps.module import AppsModule
 from .web.api import router as core_router
 
 logging.basicConfig(
     level=getattr(logging, config.get("system", "log_level", default="INFO").upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
 )
-logger = logging.getLogger("aetherbox")
+logger = logging.getLogger("claraos")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing AetherBox Core Engine...")
+    logger.info("Initializing ClaraOS Core Engine...")
     
-    # Register pluggable modules
+    # Register all pluggable modules
     module_manager.app = app
+    module_manager.register(AgentsModule())
     module_manager.register(SyncModule())
     module_manager.register(OrganizerModule())
     module_manager.register(DebridModule())
+    module_manager.register(AppsModule())
     
     # Start all enabled modules
     await module_manager.start_all()
-    logger.info("AetherBox startup completed successfully")
+    logger.info("ClaraOS startup completed successfully")
     
     yield
     
-    logger.info("Shutting down AetherBox...")
+    logger.info("Shutting down ClaraOS...")
     await module_manager.stop_all()
-    logger.info("AetherBox shutdown complete")
+    logger.info("ClaraOS shutdown complete")
 
 
 app = FastAPI(
-    title="AetherBox",
-    description="The Modular Ingestion, Debrid & Cloud Sync Engine for Homelab Media Stacks",
+    title="ClaraOS",
+    description="The AI-Native Homelab & Multi-Agent Operating System",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -68,4 +72,4 @@ if __name__ == "__main__":
     import uvicorn
     host = config.get("system", "host", default="0.0.0.0")
     port = config.get("system", "port", default=8080)
-    uvicorn.run("aetherbox.main:app", host=host, port=port, reload=True)
+    uvicorn.run("claraos.main:app", host=host, port=port, reload=True)

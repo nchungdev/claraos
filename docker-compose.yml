@@ -1,7 +1,7 @@
 services:
-  aetherbox:
-    image: ghcr.io/nchungdev/aetherbox:latest
-    container_name: aetherbox
+  claraos:
+    image: ghcr.io/nchungdev/claraos:latest
+    container_name: claraos
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -10,11 +10,15 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
       # Choose which modules to enable on startup (or toggle later via Settings UI)
-      - MODULE_DEBRID_ENABLED=true
-      - MODULE_ORGANIZER_ENABLED=true
+      - MODULE_AGENTS_ENABLED=true
+      - MODULE_APPS_ENABLED=true
       - MODULE_SYNC_ENABLED=true
+      - MODULE_ORGANIZER_ENABLED=true
+      - MODULE_DEBRID_ENABLED=true
     volumes:
       - ./config:/config
       - /srv/mergerfs/MainPool:/data
-      # Mount host /proc to allow full Rclone process telemetry & SIGSTOP/CONT throttling
+      # Mount host /proc for Rclone process inspection:
       - /proc:/proc:ro
+      # Mount host Docker Socket to enable 1-Click App Store (Plex, Sonarr, etc.):
+      - /var/run/docker.sock:/var/run/docker.sock
