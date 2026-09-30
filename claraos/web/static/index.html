@@ -61,7 +61,7 @@
         </a>
 
         <!-- App Store trong Sidebar -->
-        <a href="#store" onclick="openAppStore(); return false;" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+        <a href="#store" onclick="switchTab('store'); return false;" data-tab="store" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
           <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
           <span>App Store</span>
         </a>
@@ -130,12 +130,8 @@
         <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
       </div>
       <div id="header-actions" class="flex items-center gap-2.5">
-        <button onclick="openAppStore()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white transition flex items-center gap-2 shadow-lg shadow-cyan-600/20">
-          <i class="fa-solid fa-bag-shopping"></i>
-          <span>App Store</span>
-        </button>
-        <button onclick="refreshCurrentTab()" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-rotate text-slate-400"></i> Refresh
+        <button onclick="refreshCurrentTab()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới
         </button>
       </div>
     </header>
@@ -233,6 +229,43 @@
       <!-- App Launcher Grid (macOS Launchpad / iPadOS Style) -->
       <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-y-10 sm:gap-y-12 gap-x-6 sm:gap-x-8 justify-items-center max-w-7xl mx-auto py-6 sm:py-10 px-2 sm:px-6">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
+      </div>
+    </div>
+
+    <!-- TAB: APP STORE -->
+    <div id="tab-store" class="tab-pane hidden p-6 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <!-- Store Top Banner & Search -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-800">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+            <i class="fa-solid fa-bag-shopping text-cyan-400"></i>
+            Kho Ứng Dụng Homelab
+            <span class="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Docker Catalog</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Cài đặt, quản lý và triển khai container Docker chỉ với 1 click chuột</p>
+        </div>
+
+        <!-- Search Box -->
+        <div class="relative w-full md:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm kiếm ứng dụng, image, dịch vụ..."
+                 class="w-full bg-slate-900/90 border border-slate-700/70 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition shadow-inner">
+        </div>
+      </div>
+
+      <!-- Category Pills Filter -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="store-category-filters">
+        <button onclick="setStoreCategory('all')" data-cat="all" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-semibold transition bg-cyan-600 text-white shadow-md shadow-cyan-600/20">Tất cả</button>
+        <button onclick="setStoreCategory('Media')" data-cat="Media" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Media & Phim</button>
+        <button onclick="setStoreCategory('Automation')" data-cat="Automation" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Automation & Arr</button>
+        <button onclick="setStoreCategory('Tools')" data-cat="Tools" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Hệ thống & Tools</button>
+        <button onclick="setStoreCategory('Books')" data-cat="Books" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Sách & Audio</button>
+        <button onclick="setStoreCategory('Downloads')" data-cat="Downloads" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Tải về & Ingest</button>
+      </div>
+
+      <!-- Store Items Grid -->
+      <div id="store-items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected via JavaScript -->
       </div>
     </div>
 
@@ -361,57 +394,61 @@
     </div>
   </div>
 
-  <!-- APP STORE MODAL -->
-  <div id="modal-app-store" onclick="if(event.target === this) closeAppStore()" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-    <div class="glass-panel w-full max-w-4xl max-h-[88vh] rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col overflow-hidden bg-slate-900/95">
-      
-      <!-- Store Header -->
-      <div class="p-6 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-900/50">
-        <div class="flex items-center gap-3.5">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-600/30 text-lg">
-            <i class="fa-solid fa-bag-shopping"></i>
-          </div>
-          <div>
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              Clara App Store
-              <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-mono">Docker Catalog</span>
-            </h3>
-            <p class="text-xs text-slate-400">Khám phá và cài đặt dịch vụ tự lưu trữ (self-hosted) cho Homelab</p>
-          </div>
-        </div>
-
-        <button onclick="closeAppStore()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+  <!-- APP DETAIL POPUP MODAL -->
+  <div id="modal-app-detail" onclick="if(event.target === this) closeAppDetail()" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-150">
+    <div class="glass-panel w-full max-w-lg rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden bg-slate-900/95 flex flex-col">
+      <!-- Header with Background Glow -->
+      <div class="p-6 border-b border-slate-800/80 relative overflow-hidden bg-gradient-to-b from-slate-800/40 to-transparent">
+        <button onclick="closeAppDetail()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
           <i class="fa-solid fa-xmark text-sm"></i>
         </button>
-      </div>
 
-      <!-- Store Controls: Search & Category Filter -->
-      <div class="p-4 border-b border-slate-800/80 bg-slate-950/40 flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0">
-        <!-- Search Input -->
-        <div class="relative w-full sm:w-72">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm app, docker image..." 
-                 class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
-        </div>
-
-        <!-- Category Pills -->
-        <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" id="store-category-filters">
-          <button onclick="setStoreCategory('all')" data-cat="all" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-semibold transition bg-cyan-600 text-white shadow-md shadow-cyan-600/20">Tất cả</button>
-          <button onclick="setStoreCategory('Media')" data-cat="Media" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white">Media</button>
-          <button onclick="setStoreCategory('Automation')" data-cat="Automation" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white">Automation</button>
-          <button onclick="setStoreCategory('Tools')" data-cat="Tools" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white">Tools</button>
-          <button onclick="setStoreCategory('Books')" data-cat="Books" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white">Books</button>
-          <button onclick="setStoreCategory('Downloads')" data-cat="Downloads" class="store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white">Downloads</button>
-        </div>
-      </div>
-
-      <!-- Store Items Grid -->
-      <div class="flex-1 overflow-y-auto p-6">
-        <div id="store-items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Injected via JavaScript -->
+        <div class="flex items-start gap-4">
+          <!-- Squircle Icon Container -->
+          <div id="detail-app-icon-box" class="w-20 h-20 rounded-[22px] bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 p-3.5 shrink-0 flex items-center justify-center shadow-lg relative">
+            <img id="detail-app-icon" src="" alt="" class="w-full h-full object-contain filter drop-shadow">
+          </div>
+          
+          <div class="min-w-0 pr-6">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="detail-app-name" class="text-xl font-bold text-white truncate">App Name</h3>
+              <span id="detail-app-status-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Running</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <span id="detail-app-category" class="text-xs text-cyan-400 font-medium">Category</span>
+              <span class="text-slate-600">•</span>
+              <span id="detail-app-port" class="text-xs text-slate-400 font-mono">Port 80</span>
+            </div>
+            <p id="detail-app-desc" class="text-xs text-slate-300 mt-2 leading-relaxed line-clamp-3">Description goes here...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Metadata Body -->
+      <div class="p-6 space-y-4 text-xs">
+        <div class="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 space-y-2.5 font-mono">
+          <div class="flex justify-between items-center text-slate-400">
+            <span class="text-slate-500">Đường dẫn / URL:</span>
+            <a id="detail-app-url-link" href="#" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline truncate max-w-[240px] flex items-center gap-1">
+              <span id="detail-app-url-txt">--</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+          </div>
+          <div class="flex justify-between items-center text-slate-400">
+            <span class="text-slate-500">Docker Image:</span>
+            <span id="detail-app-image" class="text-slate-200 truncate max-w-[240px]">--</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-400">
+            <span class="text-slate-500">Container / Service:</span>
+            <span id="detail-app-container" class="text-slate-200 truncate max-w-[240px]">--</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons in Modal Footer -->
+        <div id="detail-app-actions" class="pt-2 flex items-center gap-2.5">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -453,33 +490,66 @@
         badgeClass: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
         navHtml: `
           <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hệ thống</div>
-          <a href="#apps" onclick="switchTab('apps'); return false;" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 transition">
+          <a href="#apps" onclick="switchTab('apps'); return false;" data-tab="apps" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-slate-800/80 transition">
             <i class="fa-solid fa-shapes text-cyan-400 w-5 text-center"></i>
             <span>Ứng dụng</span>
           </a>
-          <a href="#store" onclick="openAppStore(); return false;" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+          <a href="#store" onclick="switchTab('store'); return false;" data-tab="store" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
             <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
             <span>App Store</span>
           </a>
-          <a href="#agents" onclick="switchTab('agents'); return false;" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
+          <a href="#agents" onclick="switchTab('agents'); return false;" data-tab="agents" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
             <div class="flex items-center gap-3">
               <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
               <span>Agent Studio</span>
             </div>
             <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
           </a>
-          <a href="#settings" onclick="switchTab('settings'); return false;" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+          <a href="#settings" onclick="switchTab('settings'); return false;" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
             <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
             <span>Cài đặt</span>
           </a>
         `,
         headerActionsHtml: `
-          <button onclick="openAppStore()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white transition flex items-center gap-2 shadow-lg shadow-cyan-600/20">
-            <i class="fa-solid fa-bag-shopping"></i>
-            <span>App Store</span>
-          </button>
-          <button onclick="refreshCurrentTab()" class="px-3 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+          <button onclick="refreshCurrentTab()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
             <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới
+          </button>
+        `
+      },
+      store: {
+        title: 'ClaraOS',
+        subtitle: 'AI Homelab OS',
+        icon: 'fa-bag-shopping',
+        iconGradient: 'from-cyan-600 to-blue-500 shadow-cyan-500/30',
+        docTitle: 'App Store - ClaraOS',
+        headerTitle: 'Clara App Store',
+        badgeText: 'Docker Catalog',
+        badgeClass: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
+        navHtml: `
+          <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hệ thống</div>
+          <a href="#apps" onclick="switchTab('apps'); return false;" data-tab="apps" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-shapes text-cyan-400 w-5 text-center"></i>
+            <span>Ứng dụng</span>
+          </a>
+          <a href="#store" onclick="switchTab('store'); return false;" data-tab="store" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-slate-800/80 transition">
+            <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
+            <span>App Store</span>
+          </a>
+          <a href="#agents" onclick="switchTab('agents'); return false;" data-tab="agents" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
+              <span>Agent Studio</span>
+            </div>
+            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
+          </a>
+          <a href="#settings" onclick="switchTab('settings'); return false;" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
+            <span>Cài đặt</span>
+          </a>
+        `,
+        headerActionsHtml: `
+          <button onclick="renderStoreItems()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới Store
           </button>
         `
       },
@@ -710,6 +780,10 @@
       // Transform UI shell to the selected app
       renderAppShell(targetTab);
 
+      if (targetTab === 'store') {
+        renderStoreItems();
+      }
+
       refreshCurrentTab();
     }
 
@@ -883,6 +957,16 @@
 
       let actionsHtml = '';
 
+      // 0. Xem thông tin chi tiết
+      actionsHtml += `
+        <button onclick="openAppDetail('${app.id}'); closeContextMenu();" 
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800 text-left transition font-semibold">
+          <i class="fa-solid fa-circle-info text-cyan-400 w-4 text-center"></i>
+          <span>Xem thông tin chi tiết</span>
+        </button>
+        <div class="h-px bg-slate-800/80 my-1"></div>
+      `;
+
       // 1. Mở ứng dụng (nếu đang chạy hoặc native)
       if (app.native) {
         const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
@@ -987,26 +1071,25 @@
       navigator.clipboard.writeText(text);
     }
 
-    // APP STORE CONTROLLER
+    // APP STORE CONTROLLER & APP DETAIL MODAL
     let storeSelectedCategory = 'all';
     let storeSearchTerm = '';
 
     function openAppStore() {
-      document.getElementById('modal-app-store').classList.remove('hidden');
-      renderStoreItems();
+      switchTab('store');
     }
 
     function closeAppStore() {
-      document.getElementById('modal-app-store').classList.add('hidden');
+      switchTab('apps');
     }
 
     function setStoreCategory(cat) {
       storeSelectedCategory = cat;
       document.querySelectorAll('.store-cat-btn').forEach(b => {
         if (b.dataset.cat === cat) {
-          b.className = 'store-cat-btn px-3 py-1 rounded-lg text-xs font-semibold transition bg-cyan-600 text-white shadow-md shadow-cyan-600/20';
+          b.className = 'store-cat-btn px-4 py-2 rounded-xl text-xs font-semibold transition bg-cyan-600 text-white shadow-md shadow-cyan-600/20';
         } else {
-          b.className = 'store-cat-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-slate-800 text-slate-400 hover:text-white';
+          b.className = 'store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50';
         }
       });
       renderStoreItems();
@@ -1031,58 +1114,265 @@
       });
 
       if (list.length === 0) {
-        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Không tìm thấy ứng dụng phù hợp</div>';
+        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Không tìm thấy ứng dụng phù hợp trong kho</div>';
         return;
       }
 
-      container.innerHTML = list.map(app => `
-        <div class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-4 transition shadow-sm">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-14 h-14 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2.5 shrink-0 flex items-center justify-center shadow">
-              <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" alt="${app.name}" class="w-full h-full object-contain filter drop-shadow">
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <h4 class="font-bold text-sm text-white truncate">${app.name}</h4>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">${app.category}</span>
-              </div>
-              <p class="text-xs text-slate-400 truncate mt-0.5" title="${app.description}">${app.description}</p>
-              <div class="text-[11px] text-slate-500 font-mono mt-1">${app.image || 'Dịch vụ hệ thống tích hợp'}</div>
-            </div>
-          </div>
+      container.innerHTML = list.map(app => {
+        const isInstalled = Boolean(app.installed);
+        const isNative = Boolean(app.native);
+        const canManage = !isNative && app.manageable !== false && !app.protected;
 
-          <div class="shrink-0">
-            ${app.native ? `
-              <span class="text-xs text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-check"></i> Tích hợp
-              </span>
-            ` : (app.installed ? `
-              <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-circle-check"></i> Đã cài đặt
-              </span>
-            ` : `
-              <button onclick="installAppFromStore('${app.id}', this)" class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl transition shadow flex items-center gap-1.5">
-                <i class="fa-solid fa-cloud-arrow-down"></i> Cài đặt
-              </button>
-            `)}
+        let actionsHtml = '';
+        if (isNative || (app.protected && !canManage)) {
+          actionsHtml = `
+            <button onclick="event.stopPropagation(); openAppDirect('${app.id}')" title="Mở ứng dụng" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-400 hover:text-purple-300 flex items-center justify-center transition border border-slate-700/50">
+              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            </button>
+            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
+              <i class="fa-solid fa-circle-info text-xs"></i>
+            </button>
+            <span title="Dịch vụ hệ thống tích hợp" class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 text-xs">
+              <i class="fa-solid fa-shield-halved"></i>
+            </span>
+          `;
+        } else if (isInstalled) {
+          actionsHtml = `
+            <button onclick="event.stopPropagation(); openAppDirect('${app.id}')" title="Mở ứng dụng" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 flex items-center justify-center transition border border-slate-700/50">
+              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            </button>
+            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
+              <i class="fa-solid fa-circle-info text-xs"></i>
+            </button>
+            <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')" title="Gỡ cài đặt" class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          `;
+        } else {
+          actionsHtml = `
+            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition border border-slate-700/50">
+              <i class="fa-solid fa-circle-info text-xs"></i>
+            </button>
+            <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)" title="Cài đặt ứng dụng" class="h-8 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
+              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+              <span>Cài</span>
+            </button>
+          `;
+        }
+
+        return `
+          <div onclick="openAppDetail('${app.id}')" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2 shrink-0 flex items-center justify-center shadow group-hover:scale-105 transition-transform">
+                <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
+                     alt="${app.name}" 
+                     class="w-full h-full object-contain filter drop-shadow"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-xl\\'></i>';">
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <h4 class="font-bold text-sm text-white truncate group-hover:text-cyan-300 transition">${app.name}</h4>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">${app.category}</span>
+                </div>
+                <p class="text-xs text-slate-400 truncate mt-0.5" title="${app.description || ''}">${app.description || 'Không có mô tả'}</p>
+                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate">${app.image || (isNative ? 'Tích hợp sẵn' : 'Dịch vụ hệ thống')}</div>
+              </div>
+            </div>
+
+            <div class="shrink-0 flex items-center gap-1.5">
+              ${actionsHtml}
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     async function installAppFromStore(appId, btn) {
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang tải...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Cài...';
       }
       try {
         await controlApp(appId, 'install');
         renderStoreItems();
+        if (currentTab === 'apps') loadAppCatalog();
       } catch (e) {
         alert('Lỗi cài đặt: ' + (e.message || e));
         if (btn) {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Cài đặt';
+          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down text-xs"></i> Cài';
+        }
+      }
+    }
+
+    // APP DETAIL MODAL CONTROLLER
+    function openAppDetail(appId) {
+      const app = appCatalogMap[appId];
+      if (!app) return;
+
+      const appUrl = getAppUrl(app);
+      const isNative = Boolean(app.native);
+      const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
+
+      // Set icon
+      const iconImg = document.getElementById('detail-app-icon');
+      const iconBox = document.getElementById('detail-app-icon-box');
+      if (iconImg) {
+        iconImg.src = `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
+        iconImg.alt = app.name;
+        iconImg.onerror = function() {
+          this.onerror = null;
+          if (iconBox) iconBox.innerHTML = `<i class="fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-3xl"></i>`;
+        };
+      }
+
+      // Set titles
+      document.getElementById('detail-app-name').textContent = app.name;
+      document.getElementById('detail-app-desc').textContent = app.description || 'Không có mô tả chi tiết.';
+      document.getElementById('detail-app-category').textContent = app.category || 'General';
+      
+      const portEl = document.getElementById('detail-app-port');
+      if (portEl) {
+        portEl.textContent = app.native ? 'Native Module' : (app.default_port ? `Port ${app.default_port}` : 'Host Net');
+      }
+
+      // Set status badge
+      const statusBadge = document.getElementById('detail-app-status-badge');
+      if (statusBadge) {
+        if (app.native) {
+          statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5';
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Core OS';
+        } else if (app.is_running) {
+          statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5';
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang chạy';
+        } else if (app.installed) {
+          statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5';
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Đã dừng';
+        } else {
+          statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5';
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Chưa cài';
+        }
+      }
+
+      // URL links
+      const urlTxt = document.getElementById('detail-app-url-txt');
+      const urlLink = document.getElementById('detail-app-url-link');
+      if (urlTxt) urlTxt.textContent = isNative ? `/#${targetTab}` : appUrl;
+      if (urlLink) {
+        urlLink.href = isNative ? `/#${targetTab}` : appUrl;
+        if (isNative) {
+          urlLink.target = '_self';
+          urlLink.onclick = (e) => { e.preventDefault(); closeAppDetail(); switchTab(targetTab); };
+        } else {
+          urlLink.target = '_blank';
+          urlLink.onclick = null;
+        }
+      }
+
+      // Docker Image & Container
+      const imgEl = document.getElementById('detail-app-image');
+      if (imgEl) imgEl.textContent = app.image || (isNative ? 'Tích hợp sẵn (Python / Web)' : (app.protected ? 'Host System Daemon' : 'Chưa xác định'));
+
+      const cEl = document.getElementById('detail-app-container');
+      if (cEl) cEl.textContent = app.container_name || app.id;
+
+      // Actions
+      const actionsEl = document.getElementById('detail-app-actions');
+      if (actionsEl) {
+        let html = '';
+
+        if (app.installed || app.native || app.is_running) {
+          if (isNative) {
+            html += `
+              <button onclick="closeAppDetail(); switchTab('${targetTab}');" 
+                      class="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Mở ứng dụng</span>
+              </button>
+            `;
+          } else {
+            html += `
+              <button onclick="closeAppDetail(); openAppDirect('${app.id}');" 
+                      class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Mở ứng dụng</span>
+              </button>
+            `;
+          }
+
+          const canManage = !app.native && app.manageable !== false && !app.protected;
+          if (canManage) {
+            if (app.is_running) {
+              html += `
+                <button onclick="controlApp('${app.id}', 'restart'); closeAppDetail();" 
+                        title="Khởi động lại container"
+                        class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
+                  <i class="fa-solid fa-rotate"></i>
+                  <span>Khởi động lại</span>
+                </button>
+                <button onclick="controlApp('${app.id}', 'stop'); closeAppDetail();" 
+                        title="Dừng container"
+                        class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
+                  <i class="fa-solid fa-stop"></i>
+                  <span>Dừng</span>
+                </button>
+              `;
+            } else {
+              html += `
+                <button onclick="controlApp('${app.id}', 'start'); closeAppDetail();" 
+                        title="Khởi động container"
+                        class="py-2.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 font-semibold rounded-xl transition flex items-center gap-1.5 border border-emerald-500/30">
+                  <i class="fa-solid fa-play"></i>
+                  <span>Khởi động</span>
+                </button>
+              `;
+            }
+
+            html += `
+              <button onclick="closeAppDetail(); confirmUninstall('${app.id}', '${app.name}');" 
+                      title="Gỡ cài đặt"
+                      class="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-rose-500/30">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Gỡ</span>
+              </button>
+            `;
+          }
+        } else {
+          html += `
+            <button onclick="closeAppDetail(); installAppFromStore('${app.id}', null);" 
+                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              <span>Cài đặt ứng dụng</span>
+            </button>
+          `;
+        }
+
+        actionsEl.innerHTML = html;
+      }
+
+      document.getElementById('modal-app-detail').classList.remove('hidden');
+    }
+
+    function closeAppDetail() {
+      const modal = document.getElementById('modal-app-detail');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openAppDirect(appId) {
+      const app = appCatalogMap[appId];
+      if (!app) return;
+      const isNative = Boolean(app.native);
+      const appUrl = getAppUrl(app);
+      if (isNative) {
+        const targetTab = NATIVE_TAB_MAP[appId] || appId;
+        switchTab(targetTab);
+      } else {
+        if (!app.is_running && app.installed && app.manageable !== false) {
+          controlApp(appId, 'start').then(() => {
+            setTimeout(() => window.open(appUrl, '_blank', 'noopener,noreferrer'), 1200);
+          });
+        } else {
+          window.open(appUrl, '_blank', 'noopener,noreferrer');
         }
       }
     }
@@ -1096,7 +1386,7 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeContextMenu();
-        closeAppStore();
+        closeAppDetail();
         closeUninstallModal();
       }
     });
@@ -1107,6 +1397,7 @@
       try {
         if (!force && appCatalogCache && appCatalogCache.length > 0) {
           renderAppCatalogGrid(appCatalogCache);
+          if (currentTab === 'store') renderStoreItems();
           return;
         }
         const res = await fetch('/api/modules/apps/catalog');
@@ -1114,6 +1405,7 @@
         appCatalogCache = d.catalog;
         d.catalog.forEach(app => { appCatalogMap[app.id] = app; });
         renderAppCatalogGrid(d.catalog);
+        if (currentTab === 'store') renderStoreItems();
         prewarmAppConnections(d.catalog);
       } catch (e) {}
     }
@@ -1126,25 +1418,21 @@
       const desktopApps = catalog.filter(app => app.installed || app.native || app.is_running);
 
       if (desktopApps.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="openAppStore()" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="switchTab(\'store\')" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
         return;
       }
 
       grid.innerHTML = desktopApps.map(app => {
         const appUrl = getAppUrl(app);
         const isNative = Boolean(app.native);
-        const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
-        const href = isNative ? `#${targetTab}` : appUrl;
-        const targetAttr = isNative ? '' : 'target="_blank" rel="noopener noreferrer"';
 
         return `
-          <a href="${href}"
-             ${targetAttr}
-             onclick="handleAppClick(event, '${app.id}', ${app.is_running}, '${appUrl}', ${isNative})"
-             oncontextmenu="openAppContextMenu(event, '${app.id}')"
-             onmouseenter="prewarmApp('${appUrl}', ${isNative})"
-             class="app-launcher-item flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-150 select-none w-28 sm:w-32 md:w-36 focus:outline-none"
-             title="${app.name} (${appUrl})">
+          <div onclick="openAppDetail('${app.id}')"
+               ondblclick="openAppDirect('${app.id}')"
+               oncontextmenu="openAppContextMenu(event, '${app.id}')"
+               onmouseenter="prewarmApp('${appUrl}', ${isNative})"
+               class="app-launcher-item flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-150 select-none w-28 sm:w-32 md:w-36 focus:outline-none"
+               title="${app.name} (Bấm xem chi tiết / Nhấp đúp mở ngay)">
             
             <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
             <div class="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center">
@@ -1156,7 +1444,7 @@
                      loading="eager"
                      decoding="async"
                      class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-150 group-hover:scale-105"
-                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl sm:text-4xl md:text-5xl\\'></i>';">
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-3xl sm:text-4xl md:text-5xl\\'></i>';">
                 
                 <!-- Instant Click / Launching Spinner Overlay -->
                 <div id="launcher-spinner-${app.id}" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center text-cyan-400 transition-opacity">
@@ -1170,7 +1458,7 @@
               ${app.name}
             </span>
 
-          </a>
+          </div>
         `;
       }).join('');
     }
@@ -1198,7 +1486,8 @@
       const appId = pendingUninstallAppId;
       closeUninstallModal();
       await fetch(`/api/modules/apps/${appId}/uninstall`, { method: 'POST' });
-      loadAppCatalog();
+      await loadAppCatalog(true);
+      if (currentTab === 'store') renderStoreItems();
     };
 
     async function updateSystemStatus() {
@@ -1355,6 +1644,7 @@
 
     function refreshCurrentTab() {
       if (currentTab === 'apps') loadAppCatalog();
+      else if (currentTab === 'store') { loadAppCatalog().then(renderStoreItems); }
       else if (currentTab === 'sync') loadSyncStats();
       else if (currentTab === 'organizer') loadOrganizerFiles();
       else if (currentTab === 'settings') loadSettings();
