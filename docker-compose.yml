@@ -1,0 +1,20 @@
+services:
+  aetherbox:
+    image: ghcr.io/nchungdev/aetherbox:latest
+    container_name: aetherbox
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+      # Choose which modules to enable on startup (or toggle later via Settings UI)
+      - MODULE_DEBRID_ENABLED=true
+      - MODULE_ORGANIZER_ENABLED=true
+      - MODULE_SYNC_ENABLED=true
+    volumes:
+      - ./config:/config
+      - /srv/mergerfs/MainPool:/data
+      # Mount host /proc to allow full Rclone process telemetry & SIGSTOP/CONT throttling
+      - /proc:/proc:ro

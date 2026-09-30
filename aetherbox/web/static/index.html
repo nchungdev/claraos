@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AetherBox - All-In-One Homelab Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+            dark: { 800: '#1e293b', 850: '#151f30', 900: '#0f172a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-sidebar { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border-right: 1px solid rgba(255, 255, 255, 0.08); }
+    .nav-item.active { background: rgba(99, 102, 241, 0.15); border-left: 3px solid #6366f1; color: #a5b4fc; }
+    .nav-item:hover:not(.active) { background: rgba(255, 255, 255, 0.04); }
+  </style>
+</head>
+<body class="text-slate-200 flex h-screen overflow-hidden antialiased select-none">
+
+  <!-- SIDEBAR (AriaNg Style) -->
+  <aside id="sidebar" class="glass-sidebar w-64 flex flex-col justify-between transition-all duration-300 z-30 shrink-0">
+    <div>
+      <!-- Brand Header -->
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <i class="fa-solid fa-cube text-lg"></i>
+          </div>
+          <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">AetherBox</span>
+        </div>
+        <button id="toggle-sidebar" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="p-3 space-y-1" id="nav-list">
+        <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Modules</div>
+        
+        <!-- Cloud Sync Tab -->
+        <a href="#sync" data-tab="sync" class="nav-item active flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 transition group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-cloud-arrow-up text-indigo-400 w-5 text-center"></i>
+            <span>Cloud Sync</span>
+          </div>
+          <span id="badge-sync-speed" class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-mono">0 MB/s</span>
+        </a>
+
+        <!-- Media Organizer Tab -->
+        <a href="#organizer" data-tab="organizer" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-film text-purple-400 w-5 text-center"></i>
+            <span>Organizer</span>
+          </div>
+          <span id="badge-organizer-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">--</span>
+        </a>
+
+        <!-- Debrid Ingest Tab -->
+        <a href="#debrid" data-tab="debrid" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-download text-emerald-400 w-5 text-center"></i>
+            <span>Debrid Ingest</span>
+          </div>
+          <span id="badge-debrid-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">--</span>
+        </a>
+
+        <div class="pt-4 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">System</div>
+
+        <!-- Settings Tab -->
+        <a href="#settings" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition">
+          <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
+          <span>Settings & Modules</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- System Status Footer -->
+    <div class="p-3 border-t border-slate-800/80 bg-slate-900/50">
+      <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Core Active</span>
+        <span id="sys-uptime" class="font-mono">--:--</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div id="sys-ram-bar" class="bg-indigo-500 h-1.5 rounded-full" style="width: 0%"></div>
+      </div>
+      <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+        <span>RAM: <span id="sys-ram-txt">--</span></span>
+        <span>CPU: <span id="sys-cpu-txt">--</span></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <!-- Top Navbar -->
+    <header class="h-16 glass-panel border-x-0 border-t-0 flex items-center justify-between px-6 shrink-0 sticky top-0 z-20">
+      <div class="flex items-center gap-3">
+        <h1 id="page-title" class="text-lg font-bold text-white">Cloud Sync Pro</h1>
+        <span id="module-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Running</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="refreshCurrentTab()" class="px-3 py-1.5 text-xs font-medium rounded-lg glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate text-slate-400"></i> Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- TAB: SYNC -->
+    <div id="tab-sync" class="tab-pane p-6 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-panel p-5 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
+          <div>
+            <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Tốc độ tải lên thực tế</div>
+            <div id="sync-speed-val" class="text-3xl font-extrabold text-white font-mono">0.00 MB/s</div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-xl"><i class="fa-solid fa-bolt"></i></div>
+        </div>
+        <div class="glass-panel p-5 rounded-2xl flex items-center justify-between border-l-4 border-violet-500">
+          <div>
+            <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Tiến trình đồng bộ đang chạy</div>
+            <div id="sync-active-count" class="text-3xl font-extrabold text-white font-mono">0 Tasks</div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 text-xl"><i class="fa-solid fa-list-check"></i></div>
+        </div>
+      </div>
+
+      <!-- Active Transfers List -->
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-800/80 flex items-center justify-between">
+          <h2 class="font-semibold text-sm text-white flex items-center gap-2">
+            <i class="fa-solid fa-arrow-up-right-dots text-indigo-400"></i> Active Transfers & Tasks
+          </h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-400">
+            <thead class="text-xs uppercase bg-slate-900/40 text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="px-5 py-3">Task Name</th>
+                <th class="px-5 py-3">Type</th>
+                <th class="px-5 py-3">Speed</th>
+                <th class="px-5 py-3">RAM</th>
+                <th class="px-5 py-3">State</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sync-task-table" class="divide-y divide-slate-800/50">
+              <tr><td colspan="6" class="px-5 py-6 text-center text-slate-500">Scanning active Rclone tasks...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ORGANIZER -->
+    <div id="tab-organizer" class="tab-pane hidden p-6 space-y-6">
+      <div class="glass-panel p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white mb-1">Staging File Inspector</h2>
+          <p class="text-xs text-slate-400">Duyệt các file phim vừa tải về, tự động khớp TMDb và di chuyển vào thư viện chuẩn Plex/Jellyfin.</p>
+        </div>
+        <button onclick="loadOrganizerFiles()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">
+          <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Quét lại Staging
+        </button>
+      </div>
+
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div id="organizer-file-list" class="divide-y divide-slate-800/60 p-4">
+          <div class="text-center py-8 text-slate-500 text-sm">Đang tải danh sách file staging...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DEBRID -->
+    <div id="tab-debrid" class="tab-pane hidden p-6 space-y-6">
+      <div class="glass-panel p-5 rounded-2xl space-y-3">
+        <h2 class="text-base font-bold text-white">Thêm Magnet / Torrent Debrid</h2>
+        <div class="flex gap-2">
+          <input type="text" id="debrid-magnet-input" placeholder="magnet:?xt=urn:btih:... hoặc link download" class="flex-1 bg-slate-900/60 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+          <button onclick="addDebridMagnet()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg transition">
+            <i class="fa-solid fa-plus mr-1"></i> Tải ngay
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-800 flex justify-between items-center">
+          <h3 class="text-sm font-semibold text-white">Hàng đợi Debrid Cloud</h3>
+        </div>
+        <div id="debrid-torrent-list" class="p-4 space-y-3">
+          <div class="text-center py-8 text-slate-500 text-sm">Đang kết nối Torbox API...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SETTINGS & MODULE TOGGLE -->
+    <div id="tab-settings" class="tab-pane hidden p-6 space-y-6">
+      <div class="glass-panel p-6 rounded-2xl space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white mb-1">Cấu hình Modules (Dynamic Toggle)</h2>
+          <p class="text-xs text-slate-400">Bật/tắt các module linh hoạt theo nhu cầu. Hệ thống sẽ tự động cập nhật thanh điều hướng và giải phóng tài nguyên.</p>
+        </div>
+
+        <div id="module-toggle-list" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let currentTab = 'sync';
+
+    // Navigation switching
+    document.querySelectorAll('#nav-list a').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = item.dataset.tab;
+        switchTab(tab);
+      });
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('#nav-list a').forEach(a => a.classList.remove('active'));
+      const activeLink = document.querySelector(`#nav-list a[data-tab="${tab}"]`);
+      if (activeLink) activeLink.classList.add('active');
+
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+      const activePane = document.getElementById(`tab-${tab}`);
+      if (activePane) activePane.classList.remove('hidden');
+
+      const titles = {
+        sync: 'Cloud Sync Pro',
+        organizer: 'Media Organizer',
+        debrid: 'Debrid Ingestion',
+        settings: 'Settings & Modules'
+      };
+      document.getElementById('page-title').textContent = titles[tab] || 'Dashboard';
+      refreshCurrentTab();
+    }
+
+    async function updateSystemStatus() {
+      try {
+        const res = await fetch('/api/system/status');
+        const d = await res.json();
+        const uptimeMin = Math.floor(d.uptime_seconds / 60);
+        document.getElementById('sys-uptime').textContent = `${Math.floor(uptimeMin/60)}h ${uptimeMin%60}m`;
+        document.getElementById('sys-cpu-txt').textContent = `${d.cpu_percent}%`;
+        document.getElementById('sys-ram-txt').textContent = `${d.memory.used_gb}/${d.memory.total_gb}GB`;
+        document.getElementById('sys-ram-bar').style.width = `${d.memory.percent}%`;
+      } catch (e) {}
+    }
+
+    async function loadSyncStats() {
+      try {
+        const res = await fetch('/api/modules/sync/stats');
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('sync-speed-val').textContent = d.total_speed_human;
+        document.getElementById('badge-sync-speed').textContent = d.total_speed_human;
+        document.getElementById('sync-active-count').textContent = `${d.transfers.length} Tasks`;
+
+        const tbody = document.getElementById('sync-task-table');
+        if (d.all_tasks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-6 text-center text-slate-500">Không có tiến trình rclone nào đang chạy.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = d.all_tasks.map(t => `
+          <tr class="hover:bg-slate-800/30 transition">
+            <td class="px-5 py-3.5 font-medium text-slate-200">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid ${t.category === 'mount' ? 'fa-hard-drive text-amber-400' : 'fa-file-arrow-up text-indigo-400'}"></i>
+                <span>${t.name}</span>
+                <span class="text-[10px] text-slate-500 font-mono">PID ${t.pid}</span>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 capitalize text-xs">${t.category}</td>
+            <td class="px-5 py-3.5 font-mono text-emerald-400 font-medium">${t.speed_human}</td>
+            <td class="px-5 py-3.5 font-mono text-xs">${t.memory_mb} MB</td>
+            <td class="px-5 py-3.5">
+              <span class="px-2 py-0.5 text-[11px] rounded-full font-medium ${t.state === 'running' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">
+                ${t.state}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-right space-x-1">
+              ${t.state === 'running' ? `
+                <button onclick="controlSyncTask(${t.pid}, 'pause')" class="p-1.5 hover:bg-slate-700 rounded text-amber-400" title="Tạm dừng"><i class="fa-solid fa-pause"></i></button>
+              ` : `
+                <button onclick="controlSyncTask(${t.pid}, 'resume')" class="p-1.5 hover:bg-slate-700 rounded text-emerald-400" title="Tiếp tục"><i class="fa-solid fa-play"></i></button>
+              `}
+              <button onclick="controlSyncTask(${t.pid}, 'stop')" class="p-1.5 hover:bg-slate-700 rounded text-rose-400" title="Dừng hẳn"><i class="fa-solid fa-stop"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function controlSyncTask(pid, action) {
+      await fetch(`/api/modules/sync/tasks/${pid}/${action}`, { method: 'POST' });
+      loadSyncStats();
+    }
+
+    async function loadOrganizerFiles() {
+      try {
+        const res = await fetch('/api/modules/organizer/files');
+        const d = await res.json();
+        document.getElementById('badge-organizer-count').textContent = d.count;
+        const box = document.getElementById('organizer-file-list');
+        if (d.files.length === 0) {
+          box.innerHTML = '<div class="text-center py-8 text-slate-500 text-sm">Thư mục Staging trống. Không có file cần xử lý.</div>';
+          return;
+        }
+        box.innerHTML = d.files.map(f => `
+          <div class="flex items-center justify-between p-3 hover:bg-slate-800/40 rounded-xl transition">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-file-video text-purple-400 text-lg"></i>
+              <div>
+                <div class="text-sm font-medium text-slate-200">${f.name}</div>
+                <div class="text-xs text-slate-500 font-mono">${f.size_human}</div>
+              </div>
+            </div>
+            <button class="px-3 py-1.5 bg-slate-800 hover:bg-purple-600/30 text-purple-300 text-xs rounded-lg transition">Khớp TMDb</button>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/modules');
+        const d = await res.json();
+        const box = document.getElementById('module-toggle-list');
+        box.innerHTML = d.modules.map(m => `
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-sm text-white">${m.title}</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" onchange="toggleModule('${m.name}', this.checked)" ${m.enabled ? 'checked' : ''} class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">${m.description}</p>
+            <div class="text-[11px] font-mono ${m.is_running ? 'text-emerald-400' : 'text-slate-500'}">
+              Trạng thái: ${m.is_running ? '🟢 Đang chạy' : '⚪ Đã tắt'}
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function toggleModule(name, enable) {
+      await fetch(`/api/modules/${name}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: enable })
+      });
+      loadSettings();
+      updateNavigationVisibility();
+    }
+
+    async function updateNavigationVisibility() {
+      const res = await fetch('/api/modules');
+      const d = await res.json();
+      d.modules.forEach(m => {
+        const nav = document.querySelector(`#nav-list a[data-tab="${m.name}"]`);
+        if (nav) {
+          if (m.enabled) nav.classList.remove('hidden');
+          else nav.classList.add('hidden');
+        }
+      });
+    }
+
+    function refreshCurrentTab() {
+      if (currentTab === 'sync') loadSyncStats();
+      else if (currentTab === 'organizer') loadOrganizerFiles();
+      else if (currentTab === 'settings') loadSettings();
+    }
+
+    // Polling loops
+    setInterval(updateSystemStatus, 3000);
+    setInterval(() => {
+      if (currentTab === 'sync') loadSyncStats();
+    }, 2000);
+
+    // Initial boot
+    updateSystemStatus();
+    loadSyncStats();
+    loadSettings();
+    updateNavigationVisibility();
+  </script>
+</body>
+</html>

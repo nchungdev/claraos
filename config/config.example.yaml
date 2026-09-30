@@ -1,0 +1,38 @@
+system:
+  host: "0.0.0.0"
+  port: 8080
+  debug: false
+  log_level: "INFO"
+  data_dir: "/data"
+  config_dir: "/config"
+
+# Dynamic Pluggable Modules
+modules:
+  # 📥 Module 1: Ingestion & Debrid (Torbox / Aria2 / RealDebrid)
+  debrid:
+    enabled: true
+    provider: "torbox"
+    api_key: ""
+    download_dir: "/data/downloads"
+    poll_interval: 15
+    auto_clean: true
+
+  # 🎬 Module 2: Media Organizer & TMDb Scraper
+  organizer:
+    enabled: true
+    staging_dir: "/data/staging"
+    movies_dir: "/data/media/Movies"
+    tv_dir: "/data/media/TV Shows"
+    tmdb_api_key: ""
+    language: "vi-VN"
+    auto_organize: false
+
+  # 🚀 Module 3: Cloud Sync & Rclone Bandwidth Throttle
+  sync:
+    enabled: true
+    remote_name: "gdrive:"
+    remote_path: "/Media"
+    local_path: "/data/media"
+    max_bandwidth_mbps: 100
+    rclone_rc_url: "http://127.0.0.1:5572"
+    poll_interval: 2
