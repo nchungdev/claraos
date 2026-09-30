@@ -1100,9 +1100,6 @@
         let actionsHtml = '';
         if (isInstalled) {
           actionsHtml = `
-            <button onclick="event.stopPropagation(); openAppDirect('${app.id}')" title="Mở ứng dụng" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 flex items-center justify-center transition border border-slate-700/50">
-              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-            </button>
             <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
               <i class="fa-solid fa-circle-info text-xs"></i>
             </button>
@@ -1124,8 +1121,11 @@
           `;
         }
 
+        const cardAction = isInstalled ? `openAppDirect('${app.id}')` : `openAppDetail('${app.id}')`;
+        const cardTitle = isInstalled ? `${app.name} (Bấm để mở ứng dụng)` : `${app.name} (Bấm để xem chi tiết)`;
+
         return `
-          <div onclick="openAppDetail('${app.id}')" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
+          <div onclick="${cardAction}" title="${cardTitle}" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
             <div class="flex items-center gap-3.5 min-w-0">
               <div class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2 shrink-0 flex items-center justify-center shadow group-hover:scale-105 transition-transform">
                 <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
