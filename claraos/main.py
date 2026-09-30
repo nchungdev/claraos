@@ -23,17 +23,7 @@ logger = logging.getLogger("claraos")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing ClaraOS Core Engine...")
-    
-    # Register all pluggable modules
-    module_manager.app = app
-    module_manager.register(AgentsModule())
-    module_manager.register(SyncModule())
-    module_manager.register(OrganizerModule())
-    module_manager.register(DebridModule())
-    module_manager.register(AppsModule())
-    
-    # Start all enabled modules
+    logger.info("Starting ClaraOS background workers...")
     await module_manager.start_all()
     logger.info("ClaraOS startup completed successfully")
     
@@ -59,6 +49,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register all pluggable modules and their API routers onto the FastAPI app instance
+module_manager.app = app
+module_manager.register(AgentsModule())
+module_manager.register(SyncModule())
+module_manager.register(OrganizerModule())
+module_manager.register(DebridModule())
+module_manager.register(AppsModule())
 
 # Mount Core APIs
 app.include_router(core_router)
