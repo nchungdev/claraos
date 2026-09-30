@@ -338,6 +338,29 @@
 
   </main>
 
+  <!-- iOS-Style Uninstall Confirmation Modal -->
+  <div id="modal-uninstall" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden transition-opacity">
+    <div class="glass-panel w-full max-w-sm rounded-2xl p-6 border border-slate-700/80 shadow-2xl space-y-4 text-center transform scale-95 transition-transform">
+      <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-xl border border-rose-500/20">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h3 id="modal-uninstall-title" class="text-base font-bold text-white">Gỡ cài đặt ứng dụng?</h3>
+        <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+          Container Docker này sẽ bị gỡ bỏ khỏi hệ thống. Toàn bộ file dữ liệu trong ổ cứng NAS của bạn vẫn được bảo toàn nguyên vẹn.
+        </p>
+      </div>
+      <div class="space-y-2 pt-2">
+        <button id="modal-btn-confirm-delete" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-rose-600/30">
+          Gỡ bỏ ứng dụng
+        </button>
+        <button onclick="closeUninstallModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+          Hủy bỏ
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentTab = 'agents';
 
@@ -432,6 +455,7 @@
                 ` : `
                   <button onclick="controlApp('${app.id}', 'start')" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-play text-[10px]"></i> Chạy</button>
                 `}
+                <button onclick="confirmUninstall('${app.id}', '${app.name}')" class="p-1.5 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-lg transition text-xs" title="Gỡ cài đặt"><i class="fa-regular fa-trash-can"></i></button>
               ` : `
                 <button onclick="controlApp('${app.id}', 'install')" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-download text-[10px]"></i> Cài</button>
               `}
@@ -445,6 +469,27 @@
       await fetch(`/api/modules/apps/${appId}/${action}`, { method: 'POST' });
       loadAppCatalog();
     }
+
+    let pendingUninstallAppId = null;
+
+    function confirmUninstall(appId, appName) {
+      pendingUninstallAppId = appId;
+      document.getElementById('modal-uninstall-title').textContent = `Gỡ cài đặt ${appName}?`;
+      document.getElementById('modal-uninstall').classList.remove('hidden');
+    }
+
+    function closeUninstallModal() {
+      pendingUninstallAppId = null;
+      document.getElementById('modal-uninstall').classList.add('hidden');
+    }
+
+    document.getElementById('modal-btn-confirm-delete').onclick = async () => {
+      if (!pendingUninstallAppId) return;
+      const appId = pendingUninstallAppId;
+      closeUninstallModal();
+      await fetch(`/api/modules/apps/${appId}/uninstall`, { method: 'POST' });
+      loadAppCatalog();
+    };
 
     async function updateSystemStatus() {
       try {

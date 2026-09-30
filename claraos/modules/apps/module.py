@@ -86,6 +86,8 @@ class AppsModule(BaseModule):
                 ok = await docker_manager.stop_container(cid)
             elif action == "restart":
                 ok = await docker_manager.restart_container(cid)
+            elif action == "uninstall":
+                ok = await docker_manager.remove_container(cid)
             else:
                 raise HTTPException(status_code=400, detail="Invalid action")
 

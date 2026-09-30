@@ -64,6 +64,18 @@ class DockerManager:
             logger.error(f"Error restarting container {container_id}: {e}")
             return False
 
+    async def remove_container(self, container_id: str) -> bool:
+        client = self._get_client()
+        if not client: return False
+        try:
+            async with client:
+                # Force remove container (stops and deletes container instance)
+                res = await client.delete(f"/containers/{container_id}", params={"force": "true"})
+                return res.status_code in (204, 200)
+        except Exception as e:
+            logger.error(f"Error removing container {container_id}: {e}")
+            return False
+
     async def pull_and_run(self, image: str, name: str, ports: Dict[str, str], volumes: List[str], env: List[str]) -> bool:
         client = self._get_client()
         if not client: return False
