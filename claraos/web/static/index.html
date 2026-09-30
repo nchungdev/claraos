@@ -426,54 +426,67 @@
         const d = await res.json();
         const grid = document.getElementById('app-catalog-grid');
         grid.innerHTML = d.catalog.map(app => `
-          <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between items-center text-center relative border ${app.is_running ? 'border-emerald-500/30 bg-emerald-500/[0.03]' : 'border-slate-800/80 hover:border-slate-700'} transition-all duration-200 hover:-translate-y-1 hover:shadow-xl group aspect-[2/3]">
+          <div class="glass-panel rounded-2xl p-3.5 flex flex-col justify-between items-center text-center relative border ${app.is_running ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : 'border-slate-800/80 hover:border-slate-700'} transition-all duration-200 hover:-translate-y-1 hover:shadow-xl group aspect-[2/3]">
             
-            <!-- Top: Status Pill & iOS-Style Uninstall Button -->
-            <div class="w-full flex items-center justify-between">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium ${app.is_running ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (app.installed ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500')}">
-                <span class="w-1.5 h-1.5 rounded-full ${app.is_running ? 'bg-emerald-400 animate-pulse' : (app.installed ? 'bg-amber-400' : 'bg-slate-600')}"></span>
-                ${app.is_running ? 'Running' : (app.installed ? 'Stopped' : 'Ready')}
-              </span>
+            <!-- TOP SECTION: App Logo & Status Bar -->
+            <div class="w-full flex-1 flex flex-col items-center justify-center relative min-h-0 pt-1">
+              <!-- Top Header Bar: Status Pill & iOS-Style Uninstall Button -->
+              <div class="w-full flex items-center justify-between absolute top-0 left-0 right-0 px-0.5">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium ${app.is_running ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : (app.installed ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400')}">
+                  <span class="w-1.5 h-1.5 rounded-full ${app.is_running ? 'bg-emerald-400 animate-pulse' : (app.installed ? 'bg-amber-400' : 'bg-slate-500')}"></span>
+                  ${app.is_running ? 'Running' : (app.installed ? 'Stopped' : 'Ready')}
+                </span>
 
-              ${app.installed ? `
-                <button onclick="confirmUninstall('${app.id}', '${app.name}')" class="w-6 h-6 rounded-full bg-slate-800/80 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 flex items-center justify-center transition text-xs" title="Gỡ cài đặt">
-                  <i class="fa-solid fa-xmark text-[11px]"></i>
-                </button>
-              ` : '<span class="w-6 h-6"></span>'}
-            </div>
-
-            <!-- Center: Squircle App Icon & Meta -->
-            <div class="flex flex-col items-center my-auto w-full px-1">
-              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 shadow-lg shadow-black/40 flex items-center justify-center text-cyan-400 text-2xl mb-2.5 group-hover:scale-105 transition-transform">
-                <i class="fa-solid ${app.icon}"></i>
+                ${app.installed ? `
+                  <button onclick="confirmUninstall('${app.id}', '${app.name}')" class="w-6 h-6 rounded-full bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700/50 flex items-center justify-center transition text-xs shadow-sm" title="Gỡ cài đặt">
+                    <i class="fa-solid fa-xmark text-[11px]"></i>
+                  </button>
+                ` : '<span class="w-6 h-6"></span>'}
               </div>
-              
-              <h4 class="font-bold text-sm text-white truncate w-full group-hover:text-cyan-300 transition" title="${app.name}">${app.name}</h4>
-              <div class="text-[11px] text-slate-500 font-mono mt-0.5">:${app.default_port} • ${app.category}</div>
+
+              <!-- Top: App Logo -->
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900 border border-slate-700/60 shadow-xl shadow-black/40 p-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200 mt-5">
+                <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.id}.png" 
+                     alt="${app.name}" 
+                     class="w-full h-full object-contain filter drop-shadow"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon} text-cyan-400 text-3xl\\'></i>';">
+              </div>
             </div>
 
-            <!-- Bottom: Action Buttons -->
-            <div class="w-full pt-2">
-              ${app.installed ? `
-                ${app.is_running ? `
-                  <div class="grid grid-cols-2 gap-1.5">
-                    <a href="http://${window.location.hostname}:${app.default_port}" target="_blank" class="py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-1">
-                      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Mở
-                    </a>
-                    <button onclick="controlApp('${app.id}', 'stop')" class="py-1.5 bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 text-xs font-medium rounded-xl transition">
-                      Dừng
+            <!-- BOTTOM SECTION: Name, Info, Action Buttons -->
+            <div class="w-full flex flex-col items-center pt-2">
+              <h4 class="font-bold text-sm text-white truncate w-full text-center group-hover:text-cyan-300 transition px-1" title="${app.name}">
+                ${app.name}
+              </h4>
+              <div class="text-[11px] text-slate-400 font-mono mt-0.5 mb-3 flex items-center justify-center gap-1.5">
+                <span class="text-cyan-400">:${app.default_port}</span>
+                <span class="text-slate-600">•</span>
+                <span>${app.category}</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="w-full">
+                ${app.installed ? `
+                  ${app.is_running ? `
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <a href="http://${window.location.hostname}:${app.default_port}" target="_blank" class="py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Mở
+                      </a>
+                      <button onclick="controlApp('${app.id}', 'stop')" class="py-2 bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 text-xs font-medium rounded-xl transition">
+                        Dừng
+                      </button>
+                    </div>
+                  ` : `
+                    <button onclick="controlApp('${app.id}', 'start')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-1">
+                      <i class="fa-solid fa-play text-[10px]"></i> Khởi động
                     </button>
-                  </div>
+                  `}
                 ` : `
-                  <button onclick="controlApp('${app.id}', 'start')" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-play text-[10px]"></i> Khởi động
+                  <button onclick="controlApp('${app.id}', 'install')" class="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-cloud-arrow-down text-[11px]"></i> Cài đặt
                   </button>
                 `}
-              ` : `
-                <button onclick="controlApp('${app.id}', 'install')" class="w-full py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-cloud-arrow-down text-[11px]"></i> Cài đặt
-                </button>
-              `}
+              </div>
             </div>
 
           </div>
