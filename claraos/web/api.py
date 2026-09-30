@@ -41,6 +41,46 @@ async def get_system_status():
         gb = bytes_val / (1024**3)
         return f"{round(gb, 1)}GB"
 
+    # Multi-disk inspection across all NAS drives
+    all_disks = []
+    known_paths = [
+        ("/config", "NVMe SSD (Hệ điều hành / OS)", "SSD", "nvme0n1"),
+        ("/data", "MainPool (MergerFS Storage Pool)", "Pool", "mergerfs"),
+        ("/srv/mergerfs/MainPool", "MainPool (MergerFS Storage Pool)", "Pool", "mergerfs"),
+        ("/srv/dev-disk-by-uuid-98bd3ebc-514a-4108-ac09-155de8462a10", "Ổ HDD 4TB (WD Red)", "HDD", "sdc1"),
+        ("/srv/dev-disk-by-uuid-da1b5c6f-9494-4728-9e88-97e3caebeb20", "Ổ HDD 1TB (Seagate)", "HDD", "sde"),
+        ("/srv/dev-disk-by-uuid-6e0168a7-d077-4245-8cb7-2a2b0f812b8e", "Ổ HDD 1TB (HGST)", "HDD", "sda1"),
+    ]
+
+    seen_devices = set()
+    for path, label, dtype, dev_id in known_paths:
+        if os.path.exists(path) and dev_id not in seen_devices:
+            try:
+                u = os.statvfs(path)
+                t = u.f_blocks * u.f_frsize
+                if t == 0:
+                    continue
+                f = u.f_bavail * u.f_frsize
+                used = t - f
+                pct = round((used / t) * 100, 1)
+                seen_devices.add(dev_id)
+
+                all_disks.append({
+                    "id": dev_id,
+                    "name": label,
+                    "type": dtype,
+                    "path": path,
+                    "total_human": format_size(t),
+                    "used_human": format_size(used),
+                    "free_human": format_size(f),
+                    "total_gb": round(t / (1024**3), 1),
+                    "used_gb": round(used / (1024**3), 1),
+                    "free_gb": round(f / (1024**3), 1),
+                    "percent": pct
+                })
+            except Exception:
+                pass
+
     return {
         "status": "healthy",
         "uptime_seconds": uptime_sec,
@@ -60,6 +100,7 @@ async def get_system_status():
             "used_human": format_size(disk.used),
             "free_human": format_size(disk.free)
         },
+        "disks": all_disks,
         "modules": module_manager.list_modules()
     }
 

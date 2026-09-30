@@ -1,45 +1,45 @@
 from typing import Dict, Any, List
 
 APP_CATALOG: List[Dict[str, Any]] = [
-    # 1. Native ClaraOS Core Apps
+    # 1. ClaraOS Specialized Services
     {
         "id": "cloud-sync",
-        "name": "Cloud Sync Pro",
+        "name": "DriveSync Pro",
         "category": "System",
-        "description": "Real-time Linux /proc I/O monitoring & Rclone Cloud Sync.",
+        "description": "Quản lý đồng bộ Cloud Rclone & Google Drive tốc độ cao.",
         "icon": "fa-cloud-arrow-up",
         "logo_id": "rclone",
-        "native": True,
-        "default_port": 8090,
-        "url": "/#sync",
-        "protected": True,
-        "manageable": False
+        "default_port": 5572,
+        "subdomain": "rclone",
+        "installed": True,
+        "is_running": True,
+        "container_name": "cloudflared-rclone"
     },
     {
         "id": "media-organizer",
         "name": "Media Organizer",
         "category": "Media",
-        "description": "TMDb metadata scraper & automatic media renamer.",
+        "description": "Tự động phân loại, đổi tên và khớp metadata TMDb cho phim & series.",
         "icon": "fa-film",
         "logo_id": "tmdb",
-        "native": True,
-        "default_port": 8090,
-        "url": "/#organizer",
-        "protected": True,
-        "manageable": False
+        "default_port": 8093,
+        "subdomain": "media-organizer",
+        "installed": True,
+        "is_running": True,
+        "container_name": "media-organizer"
     },
     {
         "id": "debrid-ingest",
-        "name": "Debrid Ingestion",
+        "name": "TorBox & Aria2 Manager",
         "category": "Downloads",
-        "description": "Torbox high-speed Cloud Debrid downloader.",
+        "description": "Tải phim TorBox Debrid & Aria2 RPC tốc độ cao về NAS.",
         "icon": "fa-download",
         "logo_id": "torbox",
-        "native": True,
-        "default_port": 8090,
-        "url": "/#debrid",
-        "protected": True,
-        "manageable": False
+        "default_port": 8092,
+        "subdomain": "torbox-worker",
+        "installed": True,
+        "is_running": True,
+        "container_name": "torbox-worker"
     },
     # 2. Existing NAS Host & Core Services
     {

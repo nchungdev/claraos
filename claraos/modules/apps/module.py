@@ -39,12 +39,12 @@ class AppsModule(BaseModule):
                 app_id = app["id"].lower()
                 catalog_ids.add(app_id)
 
-                if app.get("native") or app_id == "omv":
+                if app_id in ("cloud-sync", "media-organizer", "debrid-ingest", "omv"):
                     catalog_with_status.append({
                         **app,
                         "installed": True,
                         "state": "running",
-                        "container_id": None,
+                        "container_id": app.get("container_name", app_id),
                         "is_running": True
                     })
                     continue

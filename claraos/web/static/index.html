@@ -103,10 +103,14 @@
       </div>
 
       <!-- Storage Pool (Ổ cứng) Metric -->
-      <div class="space-y-1">
+      <div onclick="openDisksModal()" class="space-y-1 cursor-pointer group hover:bg-slate-800/40 p-1.5 -mx-1.5 rounded-xl transition" title="Bấm để xem chi tiết các ổ đĩa NAS">
         <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-          <span class="flex items-center gap-1"><i class="fa-solid fa-hard-drive text-[9px] text-cyan-400"></i> Ổ cứng (Pool)</span>
-          <span id="sys-disk-txt">--/--</span>
+          <span class="flex items-center gap-1 group-hover:text-cyan-300 transition">
+            <i class="fa-solid fa-hard-drive text-[9px] text-cyan-400"></i> 
+            <span>Ổ cứng (Pool)</span>
+            <span id="sys-disks-count-badge" class="text-[9px] bg-slate-800 text-slate-400 px-1 rounded font-mono group-hover:bg-cyan-500/20 group-hover:text-cyan-300">--</span>
+          </span>
+          <span id="sys-disk-txt" class="group-hover:text-white transition">--/--</span>
         </div>
         <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
           <div id="sys-disk-bar" class="bg-cyan-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
@@ -463,9 +467,150 @@
     </div>
   </div>
 
+  <!-- ALL DISKS BREAKDOWN MODAL -->
+  <div id="modal-disks" onclick="if(event.target === this) closeDisksModal()" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-150">
+    <div class="glass-panel w-full max-w-xl rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden bg-slate-900/95 flex flex-col">
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/20 shadow-md shadow-cyan-500/10">
+            <i class="fa-solid fa-hard-drive"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              Quản Lý Ổ Cứng NAS
+              <span id="disks-modal-count" class="text-[10px] font-mono bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/20">--</span>
+            </h3>
+            <p class="text-xs text-slate-400">Chi tiết dung lượng các ổ đĩa vật lý và Storage Pool</p>
+          </div>
+        </div>
+        <button onclick="closeDisksModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Disks List Body -->
+      <div class="p-6 overflow-y-auto max-h-[70vh] space-y-3" id="disks-modal-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentTab = 'apps';
     let appCatalogMap = {};
+    let currentDisksData = [];
+
+    const COMPOSE_FILE_UUIDS = {
+      'prowlarr': '9f8e8f42-3c5a-4072-9564-8d036e308424',
+      'plex': 'd563f297-6b32-45a8-b040-9cce362c93f4',
+      'calibre-web': '0811ec4f-13f7-4d51-b21a-73b605f0f55d',
+      'jellyfin': '5e6e3fec-92c2-46e2-a730-a49bdf7873f2',
+      'sonarr': '6325250f-9c37-4312-8e9d-9e065b32fd69',
+      'radarr': '5d2ce306-fcbd-4e5a-b3df-a37a15353ef0',
+      'jellyseerr': '9a18f138-fa1c-4737-9b57-7fd8a2321f46',
+      'filebrowser': 'fead0825-8752-4ed6-b114-0335be6f3984',
+      'file': 'fead0825-8752-4ed6-b114-0335be6f3984',
+      'agy-manager': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
+      'torbox': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
+      'debrid-ingest': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
+      'media-organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
+      'cloud-sync': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
+      'claraos': 'bdbf710a-9bf1-4ba6-ab52-617971cab3e4'
+    };
+
+    function openComposeEdit(appId) {
+      const uuid = COMPOSE_FILE_UUIDS[appId];
+      const host = window.location.hostname;
+      let omvBase = '';
+      if (isLocalOrIp(host)) {
+        omvBase = `http://${host}:80`;
+      } else {
+        const parts = host.split('.');
+        const baseDomain = parts.length > 2 ? parts.slice(-2).join('.') : host;
+        omvBase = `${window.location.protocol}//omv.${baseDomain}`;
+      }
+      const targetUrl = uuid 
+        ? `${omvBase}/#/services/compose/files/edit/${uuid}`
+        : `${omvBase}/#/services/compose/files`;
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    function openDisksModal() {
+      renderDisksModal();
+      const m = document.getElementById('modal-disks');
+      if (m) m.classList.remove('hidden');
+    }
+
+    function closeDisksModal() {
+      const m = document.getElementById('modal-disks');
+      if (m) m.classList.add('hidden');
+    }
+
+    function renderDisksModal() {
+      const list = document.getElementById('disks-modal-list');
+      if (!list) return;
+
+      if (!currentDisksData || currentDisksData.length === 0) {
+        list.innerHTML = '<div class="py-8 text-center text-slate-500 text-sm">Đang tải dữ liệu ổ đĩa...</div>';
+        return;
+      }
+
+      list.innerHTML = currentDisksData.map(d => {
+        const pct = Math.round(d.percent);
+        let barColor = 'bg-cyan-500';
+        let badgeColor = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+        let icon = 'fa-hard-drive';
+
+        if (d.type === 'SSD') {
+          badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+          icon = 'fa-microchip';
+        } else if (d.type === 'Pool') {
+          badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+          icon = 'fa-layer-group';
+        }
+
+        if (pct >= 95) {
+          barColor = 'bg-rose-500';
+        } else if (pct >= 85) {
+          barColor = 'bg-amber-500';
+        }
+
+        return `
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 hover:border-slate-600 transition flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700/50 flex items-center justify-center text-slate-300">
+                  <i class="fa-solid ${icon} text-xs"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-white flex items-center gap-2">
+                    ${d.name}
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${badgeColor}">${d.type}</span>
+                  </div>
+                  <div class="text-[11px] font-mono text-slate-400">${d.path}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-mono font-semibold text-white">${d.used_human} / ${d.total_human}</div>
+                <div class="text-[10px] font-mono text-slate-400">Còn trống: <span class="text-emerald-400 font-semibold">${d.free_human}</span></div>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-[10px] font-mono text-slate-400">
+                <span>Đã sử dụng</span>
+                <span class="${pct >= 90 ? 'text-rose-400 font-bold' : ''}">${pct}%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700/40">
+                <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
     const NATIVE_TAB_MAP = {
       'media-organizer': 'organizer',
@@ -967,33 +1112,28 @@
         <div class="h-px bg-slate-800/80 my-1"></div>
       `;
 
-      // 1. Mở ứng dụng (nếu đang chạy hoặc native)
-      if (app.native) {
-        const targetTab = NATIVE_TAB_MAP[app.id] || app.id;
+      // 1. Mở ứng dụng
+      actionsHtml += `
+        <button onclick="openAppDirect('${app.id}'); closeContextMenu();" 
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition font-semibold">
+          <i class="fa-solid fa-arrow-up-right-from-square text-cyan-400 w-4 text-center"></i>
+          <span>Mở ứng dụng</span>
+        </button>
+      `;
+
+      // 2. Chỉnh sửa Docker Compose (nếu có cấu hình trong OpenMediaVault Compose)
+      if (COMPOSE_FILE_UUIDS[app.id]) {
         actionsHtml += `
-          <button onclick="switchTab('${targetTab}'); closeContextMenu();" 
-                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-purple-500/20 text-left transition">
-            <i class="fa-solid fa-arrow-right-to-bracket text-purple-400 w-4 text-center"></i>
-            <span>Mở ứng dụng</span>
-          </button>
-          <button onclick="window.open('/#${targetTab}', '_blank'); closeContextMenu();" 
-                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 text-left transition">
-            <i class="fa-solid fa-arrow-up-right-from-square text-slate-400 w-4 text-center"></i>
-            <span>Mở trong tab mới</span>
-          </button>
-        `;
-      } else if (app.is_running) {
-        actionsHtml += `
-          <button onclick="window.open('${appUrl}', '_blank'); closeContextMenu();" 
-                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-cyan-500/20 text-left transition">
-            <i class="fa-solid fa-arrow-up-right-from-square text-cyan-400 w-4 text-center"></i>
-            <span>Mở trong tab mới</span>
+          <button onclick="openComposeEdit('${app.id}'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800 text-left transition">
+            <i class="fa-solid fa-code text-cyan-400 w-4 text-center"></i>
+            <span>Sửa Docker Compose</span>
           </button>
         `;
       }
 
-      // 2. Các hành động quản lý Docker (Ẩn hoàn toàn nếu app không có quyền quản lý hoặc là app hệ thống)
-      const canManage = !app.native && app.manageable !== false && !app.protected;
+      // 3. Các hành động quản lý Docker
+      const canManage = app.manageable !== false && !app.protected;
 
       if (canManage) {
         if (app.is_running) {
@@ -1006,7 +1146,7 @@
             <button onclick="controlApp('${app.id}', 'stop'); closeContextMenu();" 
                     class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-amber-500/20 text-left transition">
               <i class="fa-solid fa-stop text-amber-400 w-4 text-center"></i>
-              <span>Dừng container</span>
+              <span>Dừng ứng dụng</span>
             </button>
           `;
         } else if (app.installed) {
@@ -1014,7 +1154,7 @@
             <button onclick="controlApp('${app.id}', 'start'); closeContextMenu();" 
                     class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-emerald-500/20 text-left transition">
               <i class="fa-solid fa-play text-emerald-400 w-4 text-center"></i>
-              <span>Khởi động</span>
+              <span>Khởi động ứng dụng</span>
             </button>
           `;
         }
@@ -1120,23 +1260,10 @@
 
       container.innerHTML = list.map(app => {
         const isInstalled = Boolean(app.installed);
-        const isNative = Boolean(app.native);
-        const canManage = !isNative && app.manageable !== false && !app.protected;
+        const canManage = app.manageable !== false && !app.protected;
 
         let actionsHtml = '';
-        if (isNative || (app.protected && !canManage)) {
-          actionsHtml = `
-            <button onclick="event.stopPropagation(); openAppDirect('${app.id}')" title="Mở ứng dụng" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-400 hover:text-purple-300 flex items-center justify-center transition border border-slate-700/50">
-              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-            </button>
-            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
-              <i class="fa-solid fa-circle-info text-xs"></i>
-            </button>
-            <span title="Dịch vụ hệ thống tích hợp" class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 text-xs">
-              <i class="fa-solid fa-shield-halved"></i>
-            </span>
-          `;
-        } else if (isInstalled) {
+        if (isInstalled) {
           actionsHtml = `
             <button onclick="event.stopPropagation(); openAppDirect('${app.id}')" title="Mở ứng dụng" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 flex items-center justify-center transition border border-slate-700/50">
               <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
@@ -1144,9 +1271,11 @@
             <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
               <i class="fa-solid fa-circle-info text-xs"></i>
             </button>
+            ${canManage ? `
             <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')" title="Gỡ cài đặt" class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30">
               <i class="fa-solid fa-trash-can text-xs"></i>
             </button>
+            ` : ''}
           `;
         } else {
           actionsHtml = `
@@ -1175,7 +1304,7 @@
                   <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">${app.category}</span>
                 </div>
                 <p class="text-xs text-slate-400 truncate mt-0.5" title="${app.description || ''}">${app.description || 'Không có mô tả'}</p>
-                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate">${app.image || (isNative ? 'Tích hợp sẵn' : 'Dịch vụ hệ thống')}</div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate">${app.image || (app.default_port ? 'Cổng ' + app.default_port : 'Dịch vụ NAS')}</div>
               </div>
             </div>
 
@@ -1233,16 +1362,13 @@
       
       const portEl = document.getElementById('detail-app-port');
       if (portEl) {
-        portEl.textContent = app.native ? 'Native Module' : (app.default_port ? `Port ${app.default_port}` : 'Host Net');
+        portEl.textContent = app.default_port ? `Port ${app.default_port}` : 'Host / Web UI';
       }
 
       // Set status badge
       const statusBadge = document.getElementById('detail-app-status-badge');
       if (statusBadge) {
-        if (app.native) {
-          statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5';
-          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Core OS';
-        } else if (app.is_running) {
+        if (app.is_running) {
           statusBadge.className = 'text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5';
           statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang chạy';
         } else if (app.installed) {
@@ -1257,21 +1383,16 @@
       // URL links
       const urlTxt = document.getElementById('detail-app-url-txt');
       const urlLink = document.getElementById('detail-app-url-link');
-      if (urlTxt) urlTxt.textContent = isNative ? `/#${targetTab}` : appUrl;
+      if (urlTxt) urlTxt.textContent = appUrl;
       if (urlLink) {
-        urlLink.href = isNative ? `/#${targetTab}` : appUrl;
-        if (isNative) {
-          urlLink.target = '_self';
-          urlLink.onclick = (e) => { e.preventDefault(); closeAppDetail(); switchTab(targetTab); };
-        } else {
-          urlLink.target = '_blank';
-          urlLink.onclick = null;
-        }
+        urlLink.href = appUrl;
+        urlLink.target = '_blank';
+        urlLink.onclick = null;
       }
 
       // Docker Image & Container
       const imgEl = document.getElementById('detail-app-image');
-      if (imgEl) imgEl.textContent = app.image || (isNative ? 'Tích hợp sẵn (Python / Web)' : (app.protected ? 'Host System Daemon' : 'Chưa xác định'));
+      if (imgEl) imgEl.textContent = app.image || (app.protected ? 'Dịch vụ hệ thống' : 'Dịch vụ NAS');
 
       const cEl = document.getElementById('detail-app-container');
       if (cEl) cEl.textContent = app.container_name || app.id;
@@ -1281,49 +1402,50 @@
       if (actionsEl) {
         let html = '';
 
-        if (app.installed || app.native || app.is_running) {
-          if (isNative) {
+        if (app.installed || app.is_running) {
+          html += `
+            <button onclick="closeAppDetail(); openAppDirect('${app.id}');" 
+                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>Mở ứng dụng</span>
+            </button>
+          `;
+
+          if (COMPOSE_FILE_UUIDS[app.id]) {
             html += `
-              <button onclick="closeAppDetail(); switchTab('${targetTab}');" 
-                      class="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                <span>Mở ứng dụng</span>
-              </button>
-            `;
-          } else {
-            html += `
-              <button onclick="closeAppDetail(); openAppDirect('${app.id}');" 
-                      class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                <span>Mở ứng dụng</span>
+              <button onclick="openComposeEdit('${app.id}'); closeAppDetail();" 
+                      title="Sửa cấu hình Docker Compose trên OMV"
+                      class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
+                <i class="fa-solid fa-code"></i>
+                <span>Sửa Compose</span>
               </button>
             `;
           }
 
-          const canManage = !app.native && app.manageable !== false && !app.protected;
+          const canManage = app.manageable !== false && !app.protected;
           if (canManage) {
             if (app.is_running) {
               html += `
                 <button onclick="controlApp('${app.id}', 'restart'); closeAppDetail();" 
-                        title="Khởi động lại container"
+                        title="Khởi động lại ứng dụng"
                         class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
                   <i class="fa-solid fa-rotate"></i>
                   <span>Khởi động lại</span>
                 </button>
                 <button onclick="controlApp('${app.id}', 'stop'); closeAppDetail();" 
-                        title="Dừng container"
+                        title="Dừng ứng dụng"
                         class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
                   <i class="fa-solid fa-stop"></i>
-                  <span>Dừng</span>
+                  <span>Dừng ứng dụng</span>
                 </button>
               `;
             } else {
               html += `
                 <button onclick="controlApp('${app.id}', 'start'); closeAppDetail();" 
-                        title="Khởi động container"
+                        title="Khởi động ứng dụng"
                         class="py-2.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 font-semibold rounded-xl transition flex items-center gap-1.5 border border-emerald-500/30">
                   <i class="fa-solid fa-play"></i>
-                  <span>Khởi động</span>
+                  <span>Khởi động ứng dụng</span>
                 </button>
               `;
             }
@@ -1361,19 +1483,21 @@
     function openAppDirect(appId) {
       const app = appCatalogMap[appId];
       if (!app) return;
-      const isNative = Boolean(app.native);
       const appUrl = getAppUrl(app);
-      if (isNative) {
-        const targetTab = NATIVE_TAB_MAP[appId] || appId;
-        switchTab(targetTab);
+
+      // Visual feedback: show spinner briefly on the clicked card
+      const spinner = document.getElementById(`launcher-spinner-${appId}`);
+      if (spinner) {
+        spinner.classList.remove('hidden');
+        setTimeout(() => spinner.classList.add('hidden'), 1500);
+      }
+
+      if (!app.is_running && app.installed && app.manageable !== false) {
+        controlApp(appId, 'start').then(() => {
+          setTimeout(() => window.open(appUrl, '_blank', 'noopener,noreferrer'), 1200);
+        });
       } else {
-        if (!app.is_running && app.installed && app.manageable !== false) {
-          controlApp(appId, 'start').then(() => {
-            setTimeout(() => window.open(appUrl, '_blank', 'noopener,noreferrer'), 1200);
-          });
-        } else {
-          window.open(appUrl, '_blank', 'noopener,noreferrer');
-        }
+        window.open(appUrl, '_blank', 'noopener,noreferrer');
       }
     }
 
@@ -1414,8 +1538,8 @@
       const grid = document.getElementById('app-catalog-grid');
       if (!grid) return;
 
-      // Only display apps that are installed, running, or native on the desktop launcher
-      const desktopApps = catalog.filter(app => app.installed || app.native || app.is_running);
+      // Only display apps that are installed or running on the desktop launcher
+      const desktopApps = catalog.filter(app => app.installed || app.is_running);
 
       if (desktopApps.length === 0) {
         grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="switchTab(\'store\')" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
@@ -1424,15 +1548,13 @@
 
       grid.innerHTML = desktopApps.map(app => {
         const appUrl = getAppUrl(app);
-        const isNative = Boolean(app.native);
 
         return `
-          <div onclick="openAppDetail('${app.id}')"
-               ondblclick="openAppDirect('${app.id}')"
+          <div onclick="openAppDirect('${app.id}'); return false;"
                oncontextmenu="openAppContextMenu(event, '${app.id}')"
-               onmouseenter="prewarmApp('${appUrl}', ${isNative})"
+               onmouseenter="prewarmApp('${appUrl}', false)"
                class="app-launcher-item flex flex-col items-center justify-center text-center relative group cursor-pointer p-1.5 transition-all duration-150 select-none w-28 sm:w-32 md:w-36 focus:outline-none"
-               title="${app.name} (Bấm xem chi tiết / Nhấp đúp mở ngay)">
+               title="${app.name} (Bấm để mở ứng dụng - Chuột phải để quản lý)">
             
             <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
             <div class="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center">
@@ -1517,6 +1639,19 @@
             } else {
               diskBar.className = 'bg-cyan-500 h-1.5 rounded-full transition-all duration-300';
             }
+          }
+        }
+
+        if (d.disks && d.disks.length > 0) {
+          currentDisksData = d.disks;
+          const badge = document.getElementById('sys-disks-count-badge');
+          if (badge) badge.textContent = `${d.disks.length} ổ`;
+          const modalCount = document.getElementById('disks-modal-count');
+          if (modalCount) modalCount.textContent = `${d.disks.length} ổ đĩa`;
+          
+          const modal = document.getElementById('modal-disks');
+          if (modal && !modal.classList.contains('hidden')) {
+            renderDisksModal();
           }
         }
       } catch (e) {}
