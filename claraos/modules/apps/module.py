@@ -54,9 +54,11 @@ class AppsModule(BaseModule):
                 installed = c is not None
                 state = c.get("State", "stopped") if c else "not_installed"
                 cid = c.get("Id") if c else None
+                img = app.get("image") or (c.get("Image") if c else "")
                 
                 catalog_with_status.append({
                     **app,
+                    "image": img,
                     "installed": installed,
                     "state": state,
                     "container_id": cid,
@@ -82,6 +84,7 @@ class AppsModule(BaseModule):
                     "description": f"Container {name} on NAS ({c.get('Image', '')})",
                     "icon": "fa-cube",
                     "logo_id": name,
+                    "image": c.get("Image", ""),
                     "default_port": public_port,
                     "installed": True,
                     "state": c.get("State", "running"),

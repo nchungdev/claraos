@@ -1118,31 +1118,24 @@
 
         let actionsHtml = '';
         if (isInstalled) {
-          actionsHtml = `
-            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/50">
-              <i class="fa-solid fa-circle-info text-xs"></i>
-            </button>
-            ${canManage ? `
+          actionsHtml = canManage ? `
             <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')" title="Gỡ cài đặt" class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30">
               <i class="fa-solid fa-trash-can text-xs"></i>
             </button>
-            ` : ''}
-          `;
+          ` : '';
         } else {
           actionsHtml = `
-            <button onclick="event.stopPropagation(); openAppDetail('${app.id}')" title="Xem chi tiết" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition border border-slate-700/50">
-              <i class="fa-solid fa-circle-info text-xs"></i>
-            </button>
-            <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)" title="Cài đặt ứng dụng" class="h-8 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
+            <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)" title="Cài đặt ứng dụng" class="h-8 px-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
               <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
               <span>Cài</span>
             </button>
           `;
         }
 
-        const cardAction = isInstalled ? `openAppDirect('${app.id}')` : `openAppDetail('${app.id}')`;
-        const cardTitle = isInstalled ? `${app.name} (Bấm để mở ứng dụng)` : `${app.name} (Bấm để xem chi tiết)`;
+        const cardAction = `openAppDetail('${app.id}')`;
+        const cardTitle = `${app.name} (Bấm để xem chi tiết ứng dụng)`;
         const logoUrl = app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
+        const imagePath = app.image || (app.container_name ? `${app.container_name}:latest` : '') || 'docker.io/library/custom:latest';
 
         return `
           <div onclick="${cardAction}" title="${cardTitle}" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
@@ -1159,7 +1152,10 @@
                   <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">${app.category}</span>
                 </div>
                 <p class="text-xs text-slate-400 truncate mt-0.5" title="${app.description || ''}">${app.description || 'Không có mô tả'}</p>
-                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate">${app.image || (app.default_port ? 'Cổng ' + app.default_port : 'Dịch vụ NAS')}</div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate flex items-center gap-1.5" title="${imagePath}">
+                  <i class="fa-brands fa-docker text-slate-600 text-xs shrink-0"></i>
+                  <span class="truncate">${imagePath}</span>
+                </div>
               </div>
             </div>
 

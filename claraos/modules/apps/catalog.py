@@ -14,7 +14,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "subdomain": "media-organizer",
         "installed": True,
         "is_running": True,
-        "container_name": "media-organizer"
+        "container_name": "media-organizer",
+        "image": "ghcr.io/nchungdev/media-organizer:latest"
     },
     {
         "id": "debrid-ingest",
@@ -27,7 +28,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "subdomain": "torbox-worker",
         "installed": True,
         "is_running": True,
-        "container_name": "torbox-worker"
+        "container_name": "torbox-worker",
+        "image": "ghcr.io/nchungdev/debrid-manager:latest"
     },
     # 2. Existing NAS Host & Core Services
     {
@@ -42,7 +44,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "protected": True,
         "manageable": False,
         "installed": True,
-        "is_running": True
+        "is_running": True,
+        "image": "openmediavault:host"
     },
     {
         "id": "agy-manager",
@@ -54,7 +57,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "subdomain": "agy",
         "default_port": 8585,
         "protected": True,
-        "manageable": False
+        "manageable": False,
+        "image": "ghcr.io/nchungdev/antigravity-manager:latest"
     },
     {
         "id": "rclone",
@@ -69,7 +73,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "is_running": True,
         "protected": True,
         "manageable": False,
-        "container_name": "cloudflared-rclone"
+        "container_name": "cloudflared-rclone",
+        "image": "rclone/rclone:latest"
     },
     # 3. Media Streaming & Request
     {
