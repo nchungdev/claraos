@@ -141,7 +141,7 @@
         <h1 id="page-title" class="text-base sm:text-lg font-bold text-white truncate">Ứng dụng</h1>
         <span id="module-status-badge" class="hidden sm:inline-flex text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">Active</span>
       </div>
-      <div id="header-actions" class="flex items-center gap-2.5">
+      <div id="header-actions" class="flex items-center gap-2.5 shrink-0">
         <button onclick="refreshCurrentTab()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
           <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới
         </button>
@@ -236,10 +236,9 @@
       </div>
     </div>
 
-    <!-- TAB: APPS & DOCKER -->
-    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 space-y-4">
-      <!-- App Launcher Grid (macOS Launchpad / iPadOS Style) -->
-      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-y-7 sm:gap-y-12 gap-x-2.5 sm:gap-x-8 justify-items-center w-full py-4 sm:py-8 px-1 sm:px-4">
+    <!-- TAB: APP HUB -->
+    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 w-full overflow-y-auto">
+      <div id="app-catalog-grid" class="w-full">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
@@ -416,9 +415,12 @@
       'filebrowser': 'fead0825-8752-4ed6-b114-0335be6f3984',
       'file': 'fead0825-8752-4ed6-b114-0335be6f3984',
       'agy-manager': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
+      'agent': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
       'torbox': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'debrid-ingest': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
+      'debrid': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'media-organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
+      'organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
       'cloud-sync': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
       'rclone': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
       'claraos': 'bdbf710a-9bf1-4ba6-ab52-617971cab3e4'
@@ -767,7 +769,7 @@
       catalog.forEach(app => {
         if (!app.native) {
           const sub = app.subdomain || app.id;
-          const origin = `${window.location.protocol}//${sub}.${baseDomain}`;
+          const origin = app.url || `${window.location.protocol}//${sub}.${baseDomain}`;
           
           if (!document.querySelector(`link[rel="dns-prefetch"][href="${origin}"]`)) {
             const dns = document.createElement('link');
@@ -867,6 +869,7 @@
     }
 
     function getAppUrl(app) {
+      if (app.url) return app.url;
       if (app.native) {
         return app.url;
       }
@@ -882,6 +885,9 @@
     }
 
     function getAppEndpointLabel(app) {
+      if (app.url) {
+        try { return new URL(app.url).hostname; } catch (e) { return app.url; }
+      }
       if (app.native) return 'Core Module';
       const host = window.location.hostname;
       if (isLocalOrIp(host)) {
@@ -1460,21 +1466,27 @@
     });
 
     let appCatalogCache = null;
+    let storeCatalogCache = null;
 
     async function loadAppCatalog(force = false) {
       try {
-        if (!force && appCatalogCache && appCatalogCache.length > 0) {
-          renderAppCatalogGrid(appCatalogCache);
-          if (currentTab === 'store') renderStoreItems();
+        const isStore = currentTab === 'store';
+        const cache = isStore ? storeCatalogCache : appCatalogCache;
+        if (!force && cache && cache.length > 0) {
+          if (isStore) renderStoreItems();
+          else renderAppCatalogGrid(cache);
           return;
         }
-        const res = await fetch('/api/modules/apps/catalog');
+        const res = await fetch(isStore ? '/api/modules/apps/store' : '/api/modules/apps/catalog');
         const d = await res.json();
-        appCatalogCache = d.catalog;
+        if (isStore) storeCatalogCache = d.catalog;
+        else appCatalogCache = d.catalog;
         d.catalog.forEach(app => { appCatalogMap[app.id] = app; });
-        renderAppCatalogGrid(d.catalog);
-        if (currentTab === 'store') renderStoreItems();
-        prewarmAppConnections(d.catalog);
+        if (isStore) renderStoreItems();
+        else {
+          renderAppCatalogGrid(d.catalog);
+          prewarmAppConnections(d.catalog);
+        }
       } catch (e) {}
     }
 
@@ -1483,7 +1495,10 @@
       if (!grid) return;
 
       // Only display apps that are installed/running AND have a Web GUI on the desktop launcher
-      const desktopApps = catalog.filter(app => (app.installed || app.is_running) && app.has_gui !== false && app.id !== 'flaresolverr');
+      const desktopApps = catalog
+        .filter(app => (app.installed || app.is_running) && app.has_gui !== false && app.id !== 'flaresolverr')
+        .sort((a, b) => a.name.localeCompare(b.name));
+      grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-y-7 sm:gap-y-12 gap-x-2.5 sm:gap-x-8 justify-items-center w-full py-4 sm:py-8 px-1 sm:px-4';
 
       if (desktopApps.length === 0) {
         grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="switchTab(\'store\')" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
@@ -1492,24 +1507,30 @@
 
       grid.innerHTML = desktopApps.map(app => {
         const appUrl = getAppUrl(app);
+        const inactive = !app.is_running;
+        const clickAction = inactive ? `openAppDetail('${app.id}')` : `openAppDirect('${app.id}')`;
+        const cardClass = inactive ? 'opacity-55 grayscale cursor-default' : 'cursor-pointer';
+        const iconClass = inactive
+          ? 'bg-slate-900 border-slate-800 shadow-none'
+          : 'bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border-white/10 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.5)] group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_12px_25px_rgba(6,182,212,0.2)] group-active:scale-95';
 
         return `
-          <div onclick="openAppDirect('${app.id}'); return false;"
+          <div onclick="${clickAction}; return false;"
                oncontextmenu="openAppContextMenu(event, '${app.id}')"
-               onmouseenter="prewarmApp('${appUrl}', false)"
-               class="app-launcher-item flex flex-col items-center justify-center text-center relative group cursor-pointer p-1 transition-all duration-150 select-none w-24 sm:w-28 md:w-36 focus:outline-none"
-               title="${app.name} (Bấm để mở ứng dụng - Chuột phải để quản lý)">
+               onmouseenter="${inactive ? '' : `prewarmApp('${appUrl}', false)`}"
+               class="app-launcher-item flex flex-col items-center justify-center text-center relative group p-1 transition-all duration-150 select-none w-24 sm:w-28 md:w-36 focus:outline-none ${cardClass}"
+               title="${app.name} (${inactive ? 'Chưa chạy — bấm để xem chi tiết' : 'Bấm để mở ứng dụng - Chuột phải để quản lý'})">
             
             <!-- App Icon Squircle Container (macOS Launchpad / iPadOS Ratio) -->
             <div class="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 flex items-center justify-center">
               
               <!-- Squircle Icon Box -->
-              <div class="w-full h-full rounded-[20px] sm:rounded-[24px] md:rounded-[28px] bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border border-white/10 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.5)] p-3 sm:p-4 md:p-5 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_12px_25px_rgba(6,182,212,0.2)] group-active:scale-95 transition-all duration-150 relative overflow-hidden">
-                <img src="${app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`}" 
+              <div class="w-full h-full rounded-[20px] sm:rounded-[24px] md:rounded-[28px] border p-3 sm:p-4 md:p-5 flex items-center justify-center transition-all duration-150 relative overflow-hidden ${iconClass}">
+                <img src="${app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`}"
                      alt="${app.name}" 
                      loading="eager"
                      decoding="async"
-                     class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-150 group-hover:scale-105"
+                     class="w-full h-full object-contain filter drop-shadow-md transition-transform duration-150 ${inactive ? 'opacity-45 grayscale' : 'group-hover:scale-105'}"
                      onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-2xl sm:text-3xl md:text-4xl\\'></i>';">
                 
                 <!-- Instant Click / Launching Spinner Overlay -->
@@ -1520,10 +1541,9 @@
             </div>
 
             <!-- App Label / Name (macOS SF Typography style) -->
-            <span class="font-medium text-[11px] sm:text-xs md:text-sm text-slate-100 mt-2 sm:mt-2.5 truncate w-full group-hover:text-cyan-300 transition text-center drop-shadow px-1">
+            <span class="font-medium text-[11px] sm:text-xs md:text-sm ${inactive ? 'text-slate-500' : 'text-slate-100 group-hover:text-cyan-300'} mt-2 sm:mt-2.5 truncate w-full transition text-center drop-shadow px-1">
               ${app.name}
             </span>
-
           </div>
         `;
       }).join('');

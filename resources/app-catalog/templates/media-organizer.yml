@@ -1,0 +1,16 @@
+services:
+  media-organizer:
+    image: ghcr.io/nchungdev/media-organizer:latest
+    container_name: media-organizer
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8093:8093"
+    volumes:
+      - /var/lib/media-organizer:/data
+      - /var/lib/media-staging:/staging:ro
+      - /srv/mergerfs/MainPool/Phim:/library
+    environment:
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - STAGING_ROOT=/staging
+      - MOVIES_ROOT=/library/Movies
+      - TV_ROOT=/library/TV Shows

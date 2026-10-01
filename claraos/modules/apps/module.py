@@ -13,9 +13,9 @@ logger = logging.getLogger("claraos.modules.apps")
 
 class AppsModule(BaseModule):
     name = "apps"
-    title = "App Store & Containers"
-    description = "Docker App Store & manager for Plex, *Arr stack, Komga & media tools"
-    icon = "puzzle-piece"
+    title = "App Hub"
+    description = "Compose-aware launcher and Store for NAS services"
+    icon = "shapes"
 
     def __init__(self):
         super().__init__()
@@ -24,6 +24,7 @@ class AppsModule(BaseModule):
 
     def _setup_routes(self):
         @self._router.get("/catalog")
+        @self._router.get("/store")
         async def get_catalog():
             containers = await docker_manager.list_containers(all_containers=True)
             container_map = {}

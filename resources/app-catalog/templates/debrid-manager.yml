@@ -1,0 +1,13 @@
+services:
+  debrid-manager:
+    image: ghcr.io/nchungdev/debrid-manager:latest
+    container_name: debrid-manager
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8092:8092"
+    volumes:
+      - /var/lib/debrid-manager:/data
+      - /var/lib/media-staging:/staging
+    environment:
+      - DEBRID_API_TOKEN=${DEBRID_API_TOKEN}
+      - STAGING_DIR=/staging
