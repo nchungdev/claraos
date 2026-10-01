@@ -25,7 +25,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "icon": "fa-download",
         "logo_id": "torbox",
         "default_port": 8092,
-        "subdomain": "torbox-worker",
+        "subdomain": "debrid",
         "installed": True,
         "is_running": True,
         "container_name": "torbox-worker",
