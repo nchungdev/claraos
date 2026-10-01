@@ -22,17 +22,17 @@ ClaraOS runs as a **single, ultra-lightweight Docker container** (~120MB) utiliz
 
 ### 2. 🧩 1-Click Docker App Store (`mod_apps`)
 - **Native Docker Socket Integration:** Discovers and controls upstream containers on your host via `/var/run/docker.sock`.
-- **Pre-configured Catalog:** 1-Click deploy, start, stop, and restart:
-  - **Media:** Plex Media Server, Jellyfin, Jellyseerr
-  - **Automation:** Sonarr, Radarr, Prowlarr
-  - **Reading & Tools:** Komga, Kavita, MeTube, FileBrowser, Tdarr
-- **Zero Bloat:** Third-party apps run as independent official containers; ClaraOS itself remains clean and lightweight.
+- **450+ Expanded App Catalog:** Combines curated homelab templates with rich upstream community catalogs (Portainer & Lissy93).
+  - **Dynamic Catalog Sync:** 1-Click "Đồng bộ Catalog" (`POST /api/modules/apps/catalog/sync`) to refresh templates on-the-fly with persistent host caching.
+  - **Categorized Discovery:** Filter across `All`, `Media`, `Automation`, `AI`, `Reading`, and `System & Tools`.
+  - **Intelligent GUI Detection:** Headless containers (`has_gui: false`) show operational state without misleading WebUI redirects.
+  - **Zero Bloat:** Third-party apps run as independent official containers; ClaraOS itself remains clean and lightweight.
 
 ### 3. 🚀 Cloud Sync Pro (`mod_sync`)
 - Real-time Rclone process telemetry directly from Linux `/proc`.
 - Zero-lag delta upload speed calculations.
 - Active task governance (`SIGSTOP` pause, `SIGCONT` resume, `SIGTERM` stop).
-- VFS mount inspection and dynamic bandwidth control.
+- VFS mount inspection, dynamic bandwidth control, and remote quota caching (`Available: used/quota`).
 
 ### 4. 🎬 Media Organizer (`mod_organizer`)
 - Automated Staging folder inspector.
@@ -44,6 +44,11 @@ ClaraOS runs as a **single, ultra-lightweight Docker container** (~120MB) utiliz
 - Torbox & Debrid cloud downloader integration.
 - Instant magnet & torrent ingestion pipeline.
 - Automated bridging into local staging directories.
+
+### 6. 🎨 Unified Glassmorphism & Third-Party Theming
+- Strict design language across the ecosystem: `#070c18` canvas, blur glass panels (`rgba(15, 23, 42, 0.65)`), `Plus Jakarta Sans` typography, and vibrant cyan/emerald accents.
+- **Zero-Code OpenList Integration:** Seamless styling injection via `customize_head` in SQLite persistent database—retaining 100% upstream Docker compatibility with zero source rebuilds.
+- **Standardized Footer Telemetry:** Unified status indicators, `Available: used/quota` remote metrics, and conditional HDD resource attribution across all suite apps.
 
 ---
 

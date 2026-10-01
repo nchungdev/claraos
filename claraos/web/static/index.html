@@ -252,16 +252,22 @@
           <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
             <i class="fa-solid fa-bag-shopping text-cyan-400"></i>
             Kho Ứng Dụng Homelab
-            <span class="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Docker Catalog</span>
+            <span class="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20" id="store-catalog-badge">Docker Catalog</span>
           </h2>
           <p class="text-xs text-slate-400 mt-1">Cài đặt, quản lý và triển khai container Docker chỉ với 1 click chuột</p>
         </div>
 
-        <!-- Search Box -->
-        <div class="relative w-full md:w-80">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input type="text" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm kiếm ứng dụng, image, dịch vụ..."
-                 class="w-full bg-slate-900/90 border border-slate-700/70 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition shadow-inner">
+        <!-- Actions & Search Box -->
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <button onclick="syncStoreCatalog(this)" class="px-4 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center gap-2 transition shrink-0" title="Đồng bộ lại kho ứng dụng 450+ apps từ cộng đồng">
+            <i class="fa-solid fa-arrows-rotate text-xs"></i>
+            <span>Đồng bộ Catalog</span>
+          </button>
+          <div class="relative w-full md:w-80">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm kiếm ứng dụng, image, dịch vụ..."
+                   class="w-full bg-slate-900/90 border border-slate-700/70 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition shadow-inner">
+          </div>
         </div>
       </div>
 
@@ -271,6 +277,7 @@
         <button onclick="setStoreCategory('Media')" data-cat="Media" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Media & Phim</button>
         <button onclick="setStoreCategory('Automation')" data-cat="Automation" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Automation & Arr</button>
         <button onclick="setStoreCategory('Tools')" data-cat="Tools" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Hệ thống & Tools</button>
+        <button onclick="setStoreCategory('AI')" data-cat="AI" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Trí tuệ nhân tạo (AI)</button>
         <button onclick="setStoreCategory('Books')" data-cat="Books" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Sách & Audio</button>
         <button onclick="setStoreCategory('Downloads')" data-cat="Downloads" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Tải về & Ingest</button>
       </div>
@@ -584,7 +591,7 @@
         icon: 'fa-bag-shopping',
         iconGradient: 'from-cyan-600 to-blue-500 shadow-cyan-500/30',
         docTitle: 'App Store - ClaraOS',
-        headerTitle: 'Clara App Store',
+        headerTitle: 'App Store',
         badgeText: 'Docker Catalog',
         badgeClass: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
         navHtml: `
@@ -610,7 +617,7 @@
           </a>
         `,
         headerActionsHtml: `
-          <button onclick="renderStoreItems()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+          <button onclick="syncStoreCatalog(this)" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5" title="Đồng bộ lại kho ứng dụng từ cộng đồng">
             <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới Store
           </button>
         `
@@ -1081,7 +1088,13 @@
       if (!container) return;
 
       const list = Object.values(appCatalogMap).filter(app => {
-        const matchesCategory = storeSelectedCategory === 'all' || app.category === storeSelectedCategory;
+        const cat = app.category || '';
+        const matchesCategory = storeSelectedCategory === 'all' || 
+          cat.toLowerCase() === storeSelectedCategory.toLowerCase() ||
+          (storeSelectedCategory === 'Tools' && (cat === 'System' || cat === 'Tools')) ||
+          (storeSelectedCategory === 'Downloads' && (cat.includes('Download') || cat === 'Downloads')) ||
+          (storeSelectedCategory === 'Media' && (cat.includes('Media') || cat === 'Media workflow')) ||
+          (storeSelectedCategory === 'Automation' && (cat.includes('Automation') || cat === 'Arr'));
         const matchesSearch = !storeSearchTerm || 
                               app.name.toLowerCase().includes(storeSearchTerm) || 
                               (app.description && app.description.toLowerCase().includes(storeSearchTerm)) ||
@@ -1092,6 +1105,11 @@
       if (list.length === 0) {
         container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Không tìm thấy ứng dụng phù hợp trong kho</div>';
         return;
+      }
+
+      const badge = document.getElementById('store-catalog-badge');
+      if (badge) {
+        badge.textContent = `${list.length} / ${Object.keys(appCatalogMap).length} Ứng dụng`;
       }
 
       container.innerHTML = list.map(app => {
@@ -1124,12 +1142,13 @@
 
         const cardAction = isInstalled ? `openAppDirect('${app.id}')` : `openAppDetail('${app.id}')`;
         const cardTitle = isInstalled ? `${app.name} (Bấm để mở ứng dụng)` : `${app.name} (Bấm để xem chi tiết)`;
+        const logoUrl = app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
 
         return `
           <div onclick="${cardAction}" title="${cardTitle}" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
             <div class="flex items-center gap-3.5 min-w-0">
               <div class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2 shrink-0 flex items-center justify-center shadow group-hover:scale-105 transition-transform">
-                <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
+                <img src="${logoUrl}" 
                      alt="${app.name}" 
                      class="w-full h-full object-contain filter drop-shadow"
                      onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-xl\\'></i>';">
@@ -1150,6 +1169,27 @@
           </div>
         `;
       }).join('');
+    }
+
+    async function syncStoreCatalog(btn) {
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-slate-400"></i> Đang đồng bộ...';
+      }
+      try {
+        const res = await fetch('/api/modules/apps/catalog/sync', { method: 'POST' });
+        const d = await res.json();
+        await loadAppCatalog(true);
+        renderStoreItems();
+      } catch (err) {
+        console.error('Lỗi sync catalog:', err);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
     }
 
     async function installAppFromStore(appId, btn) {
@@ -1374,8 +1414,8 @@
       const grid = document.getElementById('app-catalog-grid');
       if (!grid) return;
 
-      // Only display apps that are installed or running on the desktop launcher
-      const desktopApps = catalog.filter(app => app.installed || app.is_running);
+      // Only display apps that are installed/running AND have a Web GUI on the desktop launcher
+      const desktopApps = catalog.filter(app => (app.installed || app.is_running) && app.has_gui !== false && app.id !== 'flaresolverr');
 
       if (desktopApps.length === 0) {
         grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="switchTab(\'store\')" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
@@ -1397,7 +1437,7 @@
               
               <!-- Squircle Icon Box -->
               <div class="w-full h-full rounded-[20px] sm:rounded-[24px] md:rounded-[28px] bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900 border border-white/10 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.5)] p-3 sm:p-4 md:p-5 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-400/40 group-hover:shadow-[0_12px_25px_rgba(6,182,212,0.2)] group-active:scale-95 transition-all duration-150 relative overflow-hidden">
-                <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png" 
+                <img src="${app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`}" 
                      alt="${app.name}" 
                      loading="eager"
                      decoding="async"

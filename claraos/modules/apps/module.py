@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...core.module_base import BaseModule
-from .catalog import APP_CATALOG
+from .catalog import APP_CATALOG, get_full_catalog, sync_community_catalog
 from .docker_client import docker_manager
 
 logger = logging.getLogger("claraos.modules.apps")
@@ -35,7 +35,8 @@ class AppsModule(BaseModule):
             catalog_with_status = []
             catalog_ids = set()
 
-            for app in APP_CATALOG:
+            full_catalog = get_full_catalog()
+            for app in full_catalog:
                 app_id = app["id"].lower()
                 catalog_ids.add(app_id)
 
@@ -63,7 +64,7 @@ class AppsModule(BaseModule):
                 })
 
             # Auto-discover any active docker containers on NAS not in static catalog
-            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker"}
+            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker", "flaresolverr"}
             for name, c in container_map.items():
                 if name in catalog_ids or name in ignored_containers:
                     continue
@@ -95,9 +96,14 @@ class AppsModule(BaseModule):
                 "docker_available": bool(containers) or bool(docker_manager._get_client())
             }
 
+        @self._router.post("/catalog/sync")
+        async def sync_catalog():
+            count = await asyncio.to_thread(sync_community_catalog)
+            return {"status": "ok", "synced_count": count}
+
         @self._router.post("/{app_id}/{action}")
         async def app_action(app_id: str, action: str):
-            app = next((a for a in APP_CATALOG if a["id"].lower() == app_id.lower()), None)
+            app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
             if not app:
                 raise HTTPException(status_code=404, detail="App not found in catalog")
 

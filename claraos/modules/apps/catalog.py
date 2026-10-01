@@ -18,9 +18,9 @@ APP_CATALOG: List[Dict[str, Any]] = [
     },
     {
         "id": "debrid-ingest",
-        "name": "TorBox & Aria2 Manager",
+        "name": "Debrid Manager",
         "category": "Downloads",
-        "description": "Tải phim TorBox Debrid & Aria2 RPC tốc độ cao về NAS.",
+        "description": "Tải Debrid đám mây & chuyển tiếp về Aria2 tốc độ cao.",
         "icon": "fa-download",
         "logo_id": "torbox",
         "default_port": 8092,
@@ -58,7 +58,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
     },
     {
         "id": "rclone",
-        "name": "Rclone",
+        "name": "Rclone Manager",
         "category": "System",
         "description": "Quản lý đồng bộ Cloud Rclone & Google Drive tốc độ cao (Rclone Web GUI & VFS).",
         "icon": "fa-cloud-arrow-up",
@@ -263,7 +263,8 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "logo_id": "flaresolverr",
         "default_port": 8191,
         "protected": True,
-        "manageable": False
+        "manageable": False,
+        "has_gui": False
     },
     # 7. Additional Store-Only Apps (Available for 1-Click Install)
     {
@@ -306,3 +307,130 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "env": []
     }
 ]
+
+import os
+import json
+import logging
+import re
+import urllib.request
+
+logger = logging.getLogger("claraos.catalog")
+
+COMMUNITY_SOURCES = [
+    "https://raw.githubusercontent.com/Lissy93/portainer-templates/main/templates.json",
+    "https://raw.githubusercontent.com/portainer/templates/master/templates-2.0.json"
+]
+
+CACHE_PATHS = [
+    "/config/community_apps_cache.json",
+    os.path.join(os.path.dirname(__file__), "community_apps_cache.json"),
+    "/tmp/community_apps_cache.json"
+]
+
+CATEGORY_MAP = {
+    'media': 'Media', 'video': 'Media', 'audio': 'Media', 'music': 'Media', 'streaming': 'Media', 'multimedia': 'Media',
+    'automation': 'Automation', 'arr': 'Automation', 'iot': 'Automation', 'smart home': 'Automation', 'home automation': 'Automation',
+    'books': 'Books', 'comics': 'Books', 'ebooks': 'Books', 'audiobooks': 'Books',
+    'downloads': 'Downloads', 'downloaders': 'Downloads', 'torrent': 'Downloads',
+    'ai': 'AI', 'llm': 'AI', 'machine learning': 'AI',
+    'tools': 'Tools', 'system': 'Tools', 'network': 'Tools', 'security': 'Tools', 'dashboard': 'Tools', 'database': 'Tools'
+}
+
+def map_category(cats):
+    for c in cats or []:
+        c_low = c.lower()
+        for k, v in CATEGORY_MAP.items():
+            if k in c_low:
+                return v
+    return 'Tools'
+
+def get_community_catalog() -> List[Dict[str, Any]]:
+    for path in CACHE_PATHS:
+        if os.path.isfile(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list) and len(data) > 0:
+                        return data
+            except Exception as e:
+                logger.error(f"Error reading community apps cache from {path}: {e}")
+    return []
+
+def sync_community_catalog() -> int:
+    apps = []
+    seen = set()
+    for src in COMMUNITY_SOURCES:
+        try:
+            req = urllib.request.Request(src, headers={"User-Agent": "ClaraOS-Store/1.0"})
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            templates = [t for t in data.get("templates", []) if t.get("image")]
+            for t in templates:
+                title = t.get("title") or t.get("name") or ""
+                app_id = re.sub(r"[^a-z0-9_-]", "", (t.get("name") or title).lower().replace(" ", "-"))
+                if not app_id or app_id in seen:
+                    continue
+                seen.add(app_id)
+
+                ports = {}
+                default_port = None
+                for p in t.get("ports", []):
+                    parts = p.split("/")[0].split(":")
+                    if len(parts) == 2:
+                        h, c = parts[0], parts[1]
+                        ports[h] = c
+                        if not default_port and h.isdigit():
+                            default_port = int(h)
+
+                env = []
+                for e in t.get("env", []):
+                    if isinstance(e, dict) and e.get("name"):
+                        v = e.get("default", "")
+                        env.append(f"{e['name']}={v}")
+
+                volumes = []
+                for v in t.get("volumes", []):
+                    if isinstance(v, dict) and v.get("container"):
+                        volumes.append(f"/config/{app_id}:{v['container']}")
+                if not volumes:
+                    volumes = [f"/config/{app_id}:/config"]
+
+                cat = map_category(t.get("categories", []))
+
+                apps.append({
+                    "id": app_id,
+                    "name": title,
+                    "category": cat,
+                    "description": t.get("description", ""),
+                    "logo": t.get("logo", ""),
+                    "image": t["image"],
+                    "default_port": default_port,
+                    "ports": ports,
+                    "volumes": volumes,
+                    "env": env,
+                    "community": True
+                })
+        except Exception as e:
+            logger.error(f"Failed to fetch community source {src}: {e}")
+
+    if apps:
+        for path in CACHE_PATHS:
+            try:
+                parent = os.path.dirname(path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(apps, f, indent=2, ensure_ascii=False)
+                break
+            except Exception:
+                continue
+    return len(apps)
+
+def get_full_catalog() -> List[Dict[str, Any]]:
+    full = list(APP_CATALOG)
+    existing_ids = {a["id"].lower() for a in full}
+    for ca in get_community_catalog():
+        if ca["id"].lower() not in existing_ids:
+            full.append(ca)
+            existing_ids.add(ca["id"].lower())
+    return full
