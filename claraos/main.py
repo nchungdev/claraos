@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.config import config
 from .core.module_manager import module_manager
 from .modules.agents.module import AgentsModule
-from .modules.sync.module import SyncModule
 from .modules.organizer.module import OrganizerModule
 from .modules.debrid.module import DebridModule
 from .modules.apps.module import AppsModule
@@ -53,7 +52,6 @@ app.add_middleware(
 # Register all pluggable modules and their API routers onto the FastAPI app instance
 module_manager.app = app
 module_manager.register(AgentsModule())
-module_manager.register(SyncModule())
 module_manager.register(OrganizerModule())
 module_manager.register(DebridModule())
 module_manager.register(AppsModule())

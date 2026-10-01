@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from typing import Any, Callable, Coroutine, Dict, List
 
-logger = logging.getLogger("aetherbox.events")
+logger = logging.getLogger("claraos.events")
 
 
 class EventBus:

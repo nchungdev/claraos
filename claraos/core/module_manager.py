@@ -5,7 +5,7 @@ from .config import config
 from .event_bus import event_bus
 from .module_base import BaseModule
 
-logger = logging.getLogger("aetherbox.modules")
+logger = logging.getLogger("claraos.modules")
 
 
 class ModuleManager:

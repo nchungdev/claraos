@@ -5,8 +5,9 @@ pub fn run() {
         .setup(|app| {
             #[cfg(debug_assertions)]
             {
-                let window = tauri::Manager::get_webview_window(app, "main").unwrap();
-                window.open_devtools();
+                if let Some(window) = tauri::Manager::get_webview_window(app, "main") {
+                    window.open_devtools();
+                }
             }
             Ok(())
         })

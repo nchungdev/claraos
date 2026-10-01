@@ -1,8 +1,8 @@
 import os
 import re
+import shutil
 import asyncio
 import logging
-import sqlite3
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException, Query
@@ -12,7 +12,7 @@ import httpx
 from ...core.module_base import BaseModule
 from ...core.config import config
 
-logger = logging.getLogger("aetherbox.modules.organizer")
+logger = logging.getLogger("claraos.modules.organizer")
 
 
 class MatchRequest(BaseModel):
@@ -23,6 +23,34 @@ class MatchRequest(BaseModel):
     year: Optional[str] = None
     season: Optional[int] = None
     episode: Optional[int] = None
+
+
+def _scan_staging_directory(staging_dir: Path) -> List[Dict[str, Any]]:
+    files = []
+    for root, _, filenames in os.walk(staging_dir):
+        for f in filenames:
+            p = Path(root) / f
+            if p.suffix.lower() in (".mkv", ".mp4", ".avi", ".mov"):
+                try:
+                    size = p.stat().st_size
+                    files.append({
+                        "path": str(p),
+                        "name": p.name,
+                        "relative_path": str(p.relative_to(staging_dir)),
+                        "size": size,
+                        "size_human": f"{size / (1024*1024):.1f} MB" if size < 1024**3 else f"{size / (1024**3):.2f} GB"
+                    })
+                except OSError:
+                    continue
+    return files
+
+
+def _atomic_move_or_copy(source: Path, destination: Path) -> None:
+    try:
+        os.link(source, destination)
+        source.unlink()
+    except OSError:
+        shutil.move(str(source), str(destination))
 
 
 class OrganizerModule(BaseModule):
@@ -41,23 +69,11 @@ class OrganizerModule(BaseModule):
     def _setup_routes(self):
         @self._router.get("/files")
         async def list_files():
-            staging_dir = Path(config.get("modules", "organizer", "staging_dir", default="/data/staging"))
+            staging_dir = Path(config.get("modules", "organizer", "staging_dir", default="/data/staging")).resolve()
             if not staging_dir.exists():
                 return {"files": [], "staging_dir": str(staging_dir), "exists": False}
 
-            files = []
-            for root, _, filenames in os.walk(staging_dir):
-                for f in filenames:
-                    p = Path(root) / f
-                    if p.suffix.lower() in (".mkv", ".mp4", ".avi", ".mov"):
-                        size = p.stat().st_size
-                        files.append({
-                            "path": str(p),
-                            "name": p.name,
-                            "relative_path": str(p.relative_to(staging_dir)),
-                            "size": size,
-                            "size_human": f"{size / (1024*1024):.1f} MB" if size < 1024**3 else f"{size / (1024**3):.2f} GB"
-                        })
+            files = await asyncio.to_thread(_scan_staging_directory, staging_dir)
             return {"files": files, "count": len(files), "staging_dir": str(staging_dir), "exists": True}
 
         @self._router.get("/tmdb/search")
@@ -83,7 +99,13 @@ class OrganizerModule(BaseModule):
 
         @self._router.post("/organize")
         async def organize_file(req: MatchRequest):
-            staging_file = Path(req.file_path)
+            staging_dir = Path(config.get("modules", "organizer", "staging_dir", default="/data/staging")).resolve()
+            staging_file = Path(req.file_path).resolve()
+
+            # Security: Path Traversal Prevention
+            if not staging_file.is_relative_to(staging_dir):
+                raise HTTPException(status_code=400, detail="Path traversal rejected: Target file must be inside staging directory")
+
             if not staging_file.exists():
                 raise HTTPException(status_code=404, detail="Source file not found")
 
@@ -102,14 +124,9 @@ class OrganizerModule(BaseModule):
                 target_file = target_dir / f"{clean_title} - S{s_num:02d}E{e_num:02d}{ext}"
 
             target_dir.mkdir(parents=True, exist_ok=True)
-            # Perform atomic move / hardlink
-            try:
-                os.link(staging_file, target_file)
-                staging_file.unlink()
-            except OSError:
-                # Fallback to copy/move across devices
-                import shutil
-                shutil.move(str(staging_file), str(target_file))
+            
+            # Non-blocking async I/O
+            await asyncio.to_thread(_atomic_move_or_copy, staging_file, target_file)
 
             return {
                 "status": "success",

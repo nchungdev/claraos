@@ -10,7 +10,7 @@ from ...core.module_base import BaseModule
 from ...core.config import config
 from ...core.event_bus import event_bus
 
-logger = logging.getLogger("aetherbox.modules.debrid")
+logger = logging.getLogger("claraos.modules.debrid")
 
 
 class AddTorrentRequest(BaseModel):
@@ -37,7 +37,7 @@ class DebridModule(BaseModule):
         return {
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "AetherBox-Debrid/1.0"
+            "User-Agent": "ClaraOS-Debrid/1.0"
         }
 
     def _setup_routes(self):
