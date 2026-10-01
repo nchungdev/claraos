@@ -84,7 +84,6 @@
         const cardAction = `openAppDetail('${app.id}')`;
         const cardTitle = `${app.name} (Bấm để xem chi tiết ứng dụng)`;
         const logoUrl = app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
-        const imagePath = app.image || (app.container_name ? `${app.container_name}:latest` : '') || 'docker.io/library/custom:latest';
 
         // Tag & Status
         let statusBadgeHtml = '';
@@ -109,8 +108,11 @@
             ${canManage ? `
               <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')"
                       title="Gỡ cài đặt"
-                      class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30 shrink-0">
+                      class="h-8 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400
+                             hover:text-rose-300 text-xs font-semibold flex items-center justify-center
+                             gap-1.5 border border-rose-500/30 transition">
                 <i class="fa-solid fa-trash-can text-xs"></i>
+                <span>Gỡ cài đặt</span>
               </button>
             ` : ''}
           `;
@@ -155,14 +157,8 @@
               ${statusBadgeHtml}
             </div>
 
-            <!-- 4. Image Path -->
-            <div class="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1.5 bg-slate-950/60 px-2.5 py-1.5 rounded-xl border border-slate-800/80" title="${imagePath}">
-              <i class="fa-brands fa-docker text-cyan-400 text-xs shrink-0"></i>
-              <span class="truncate">${imagePath}</span>
-            </div>
-
-            <!-- 5. Actions: Cài đặt / Mở & Github (Home page) -->
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800/70">
+            <!-- 4. Actions: Cài đặt / Mở & Gỡ cài đặt & Github (Home page) -->
+            <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-800/70">
               ${mainActionBtnHtml}
               <a href="${homepage.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();"
                  title="${homepage.label} của ${app.name}"
