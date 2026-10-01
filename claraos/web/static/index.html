@@ -1232,9 +1232,15 @@
       document.getElementById('detail-app-desc').textContent = app.description || 'Không có mô tả chi tiết.';
       document.getElementById('detail-app-category').textContent = app.category || 'General';
       
+      const isInstalled = Boolean(app.installed || app.is_running);
+
       const portEl = document.getElementById('detail-app-port');
       if (portEl) {
-        portEl.textContent = app.default_port ? `Port ${app.default_port}` : 'Host / Web UI';
+        if (app.default_port) {
+          portEl.textContent = isInstalled ? `Port ${app.default_port}` : `Port dự kiến ${app.default_port}`;
+        } else {
+          portEl.textContent = isInstalled ? 'Host / Web UI' : 'Chưa cấu hình port';
+        }
       }
 
       // Set status badge
@@ -1255,11 +1261,21 @@
       // URL links
       const urlTxt = document.getElementById('detail-app-url-txt');
       const urlLink = document.getElementById('detail-app-url-link');
-      if (urlTxt) urlTxt.textContent = appUrl;
-      if (urlLink) {
-        urlLink.href = appUrl;
-        urlLink.target = '_blank';
-        urlLink.onclick = null;
+      if (urlTxt && urlLink) {
+        const icon = urlLink.querySelector('i');
+        if (isInstalled) {
+          urlTxt.textContent = appUrl;
+          urlLink.href = appUrl;
+          urlLink.target = '_blank';
+          urlLink.className = 'text-cyan-400 hover:underline truncate max-w-[240px] flex items-center gap-1';
+          if (icon) icon.classList.remove('hidden');
+        } else {
+          urlTxt.textContent = 'Chưa cài đặt';
+          urlLink.removeAttribute('href');
+          urlLink.removeAttribute('target');
+          urlLink.className = 'text-slate-500 italic truncate max-w-[240px] flex items-center gap-1 cursor-default select-none';
+          if (icon) icon.classList.add('hidden');
+        }
       }
 
       // Docker Image & Container
@@ -1267,7 +1283,15 @@
       if (imgEl) imgEl.textContent = app.image || (app.protected ? 'Dịch vụ hệ thống' : 'Dịch vụ NAS');
 
       const cEl = document.getElementById('detail-app-container');
-      if (cEl) cEl.textContent = app.container_name || app.id;
+      if (cEl) {
+        if (isInstalled) {
+          cEl.textContent = app.container_name || app.id;
+          cEl.className = 'text-slate-200 truncate max-w-[240px]';
+        } else {
+          cEl.textContent = `${app.container_name || app.id} (chưa tạo)`;
+          cEl.className = 'text-slate-500 italic truncate max-w-[240px]';
+        }
+      }
 
       // Actions
       const actionsEl = document.getElementById('detail-app-actions');
