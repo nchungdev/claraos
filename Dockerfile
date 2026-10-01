@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application source
 COPY claraos/ ./claraos/
 COPY config/ ./config/
+COPY resources/ ./resources/
 
 # Standard homelab mount volumes
 VOLUME ["/config", "/data"]

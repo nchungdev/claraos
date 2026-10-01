@@ -1,0 +1,59 @@
+apps:
+  - id: organizer
+    name: Organizer
+    category: Media workflow
+    description: Duyệt staging, khớp TMDb và đề xuất vị trí Plex/Jellyfin.
+    container_name: media-organizer
+    icon: fa-film
+    logo_id: tmdb
+    default_port: 8093
+    subdomain: media-organizer
+    installable: true
+    image: ghcr.io/nchungdev/media-organizer:latest
+    template: templates/media-organizer.yml
+
+  - id: debrid
+    name: Debrid Manager
+    category: Download workflow
+    description: Quản lý debrid queue; TorBox là một adapter tải cloud.
+    container_name: debrid-manager
+    container_aliases: [torbox-worker]
+    icon: fa-cloud-arrow-down
+    logo_id: torbox
+    default_port: 8092
+    subdomain: debrid
+    installable: true
+    image: ghcr.io/nchungdev/debrid-manager:latest
+    template: templates/debrid-manager.yml
+
+  - id: rclone
+    name: Rclone
+    category: Cloud storage
+    description: Remote, mount, transfer và Rclone Web GUI.
+    container_name: rclone
+    icon: fa-cloud-arrow-up
+    logo_id: rclone
+    default_port: 5572
+    subdomain: rclone
+    installable: false
+
+  - id: ariang
+    name: AriaNg
+    category: Download workflow
+    description: Giao diện quản lý hàng đợi Aria2.
+    container_name: ariang
+    icon: fa-download
+    logo_id: ariang
+    subdomain: ariang
+    installable: false
+
+  - id: agent
+    name: Agent
+    category: Automation
+    description: Điều phối AGY Manager và tác vụ agent.
+    container_name: agy-manager
+    icon: fa-robot
+    logo_id: anthropic
+    default_port: 8585
+    subdomain: agy
+    installable: false

@@ -141,7 +141,7 @@
         <h1 id="page-title" class="text-base sm:text-lg font-bold text-white truncate">Ứng dụng</h1>
         <span id="module-status-badge" class="hidden sm:inline-flex text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">Active</span>
       </div>
-      <div id="header-actions" class="flex items-center gap-2.5">
+      <div id="header-actions" class="flex items-center gap-2.5 shrink-0">
         <button onclick="refreshCurrentTab()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
           <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới
         </button>
@@ -236,55 +236,20 @@
       </div>
     </div>
 
-    <!-- TAB: COMPOSE-AWARE APP HUB -->
-    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 space-y-5 w-full overflow-y-auto">
-      <section class="glass-panel rounded-3xl p-5 sm:p-6 border border-slate-800/80">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p class="text-[11px] uppercase tracking-[0.2em] font-semibold text-cyan-300">Compose-aware App Hub</p>
-            <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white">Ứng dụng trên NAS</h2>
-            <p class="mt-1 text-sm text-slate-400">Năm workflow chính được ghim đầu trang; các dịch vụ Docker/OMV Compose khác tự xuất hiện bên dưới.</p>
-          </div>
-          <div class="text-xs text-slate-400 flex items-center gap-2 rounded-xl bg-slate-950/50 border border-slate-800 px-3 py-2">
-            <i class="fa-solid fa-layer-group text-cyan-400"></i>
-            Compose là nguồn cấu hình chính
-          </div>
-        </div>
-      </section>
+    <!-- TAB: APP HUB -->
+    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 w-full overflow-y-auto">
       <div id="app-catalog-grid" class="w-full">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
 
     <!-- TAB: APP STORE -->
-    <div id="tab-store" class="tab-pane hidden p-4 sm:p-6 md:p-8 space-y-6 w-full">
-      <!-- Store Top Banner & Search -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-800">
-        <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
-            <i class="fa-solid fa-bag-shopping text-cyan-400"></i>
-            Kho Ứng Dụng Homelab
-            <span class="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Docker Catalog</span>
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Cài đặt, quản lý và triển khai container Docker chỉ với 1 click chuột</p>
-        </div>
-
-        <!-- Search Box -->
-        <div class="relative w-full md:w-80">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input type="text" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm kiếm ứng dụng, image, dịch vụ..."
-                 class="w-full bg-slate-900/90 border border-slate-700/70 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition shadow-inner">
-        </div>
-      </div>
-
+    <div id="tab-store" class="tab-pane hidden p-3 sm:p-6 md:p-8 space-y-4 w-full">
       <!-- Category Pills Filter -->
       <div class="flex items-center gap-2 overflow-x-auto pb-1" id="store-category-filters">
         <button onclick="setStoreCategory('all')" data-cat="all" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-semibold transition bg-cyan-600 text-white shadow-md shadow-cyan-600/20">Tất cả</button>
-        <button onclick="setStoreCategory('Media')" data-cat="Media" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Media & Phim</button>
-        <button onclick="setStoreCategory('Automation')" data-cat="Automation" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Automation & Arr</button>
-        <button onclick="setStoreCategory('Tools')" data-cat="Tools" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Hệ thống & Tools</button>
-        <button onclick="setStoreCategory('Books')" data-cat="Books" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Sách & Audio</button>
-        <button onclick="setStoreCategory('Downloads')" data-cat="Downloads" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Tải về & Ingest</button>
+        <button onclick="setStoreCategory('Media workflow')" data-cat="Media workflow" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Media workflow</button>
+        <button onclick="setStoreCategory('Download workflow')" data-cat="Download workflow" class="store-cat-btn px-4 py-2 rounded-xl text-xs font-medium transition bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/50">Download workflow</button>
       </div>
 
       <!-- Store Items Grid -->
@@ -625,7 +590,12 @@
           </a>
         `,
         headerActionsHtml: `
-          <button onclick="renderStoreItems()" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5">
+          <div class="relative w-44 sm:w-60 lg:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            <input type="search" id="store-search-input" oninput="filterStoreCatalog()" placeholder="Tìm kiếm ứng dụng..."
+                   class="w-full bg-slate-900/90 border border-slate-700/70 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition shadow-inner">
+          </div>
+          <button onclick="loadAppCatalog(true)" class="px-3.5 py-1.5 text-xs font-medium rounded-xl glass-panel hover:bg-slate-700/50 text-slate-300 transition flex items-center gap-1.5 whitespace-nowrap">
             <i class="fa-solid fa-rotate text-slate-400"></i> Làm mới Store
           </button>
         `
@@ -1099,7 +1069,7 @@
       const container = document.getElementById('store-items-grid');
       if (!container) return;
 
-      const list = Object.values(appCatalogMap).filter(app => {
+      const list = (storeCatalogCache || []).filter(app => {
         const matchesCategory = storeSelectedCategory === 'all' || app.category === storeSelectedCategory;
         const matchesSearch = !storeSearchTerm || 
                               app.name.toLowerCase().includes(storeSearchTerm) || 
@@ -1371,21 +1341,27 @@
     });
 
     let appCatalogCache = null;
+    let storeCatalogCache = null;
 
     async function loadAppCatalog(force = false) {
       try {
-        if (!force && appCatalogCache && appCatalogCache.length > 0) {
-          renderAppCatalogGrid(appCatalogCache);
-          if (currentTab === 'store') renderStoreItems();
+        const isStore = currentTab === 'store';
+        const cache = isStore ? storeCatalogCache : appCatalogCache;
+        if (!force && cache && cache.length > 0) {
+          if (isStore) renderStoreItems();
+          else renderAppCatalogGrid(cache);
           return;
         }
-        const res = await fetch('/api/modules/apps/catalog');
+        const res = await fetch(isStore ? '/api/modules/apps/store' : '/api/modules/apps/catalog');
         const d = await res.json();
-        appCatalogCache = d.catalog;
+        if (isStore) storeCatalogCache = d.catalog;
+        else appCatalogCache = d.catalog;
         d.catalog.forEach(app => { appCatalogMap[app.id] = app; });
-        renderAppCatalogGrid(d.catalog);
-        if (currentTab === 'store') renderStoreItems();
-        prewarmAppConnections(d.catalog);
+        if (isStore) renderStoreItems();
+        else {
+          renderAppCatalogGrid(d.catalog);
+          prewarmAppConnections(d.catalog);
+        }
       } catch (e) {}
     }
 
@@ -1393,10 +1369,11 @@
       const grid = document.getElementById('app-catalog-grid');
       if (!grid) return;
 
-      // CasaOS-like discovery: workflow apps first, then every Compose service.
+      // The App Hub contains only installed/discovered services. Store templates
+      // are optional and never occupy a launcher slot before installation.
       const desktopApps = [...catalog]
-        .filter(app => app.installed || app.is_running || app.pinned)
-        .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || a.name.localeCompare(b.name));
+        .filter(app => app.installed || app.is_running)
+        .sort((a, b) => a.name.localeCompare(b.name));
       grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-y-7 sm:gap-y-12 gap-x-2.5 sm:gap-x-8 justify-items-center w-full py-4 sm:py-8 px-1 sm:px-4';
 
       if (desktopApps.length === 0) {
@@ -1443,10 +1420,6 @@
             <span class="font-medium text-[11px] sm:text-xs md:text-sm ${inactive ? 'text-slate-500' : 'text-slate-100 group-hover:text-cyan-300'} mt-2 sm:mt-2.5 truncate w-full transition text-center drop-shadow px-1">
               ${app.name}
             </span>
-            <span class="mt-1 text-[9px] font-mono ${app.is_running ? 'text-emerald-400' : 'text-slate-500'} truncate max-w-full">
-              ${app.is_running ? '● running' : '○ inactive'}
-            </span>
-
           </div>
         `;
       }).join('');
