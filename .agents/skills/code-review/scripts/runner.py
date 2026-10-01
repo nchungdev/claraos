@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""Automated code review, conventions & pre-commit auditor for ClaraOS."""
+
+import argparse
+import ast
 import os
 import re
 import subprocess
@@ -13,97 +18,103 @@ def run_cmd(cmd: list[str]) -> tuple[int, str]:
         return 1, str(e)
 
 
-def check_git_diff() -> list[dict]:
-    issues = []
-    code, diff_text = run_cmd(["git", "diff", "HEAD"])
-    if not diff_text.strip():
-        code, diff_text = run_cmd(["git", "diff"])
+def _check_added_line(
+    raw_line: str,
+    file_path: str,
+    line_num: int,
+    issues: list[dict],
+    secret_re: re.Pattern,
+    except_re: re.Pattern,
+) -> None:
+    content = raw_line.strip()
+    # 1. Secret pattern check
+    if secret_re.search(content) and not any(k in file_path.lower() for k in ("example", "template")):
+        issues.append({
+            "severity": "BLOCKER",
+            "file": file_path,
+            "line": line_num,
+            "message": "Phát hiện potential secret / API token cứng trong mã nguồn.",
+        })
+
+    # 2. Broad except pass check (PEP 8)
+    if file_path.endswith(".py") and not file_path.endswith("runner.py") and except_re.search(content):
+        issues.append({
+            "severity": "WARNING",
+            "file": file_path,
+            "line": line_num,
+            "message": "Vi phạm PEP 8: Nuốt ngoại lệ âm thầm 'except: pass'. Phải log hoặc xử lý.",
+        })
+
+    # 3. Rust unwrap risk check (Rust RFC 2436)
+    if file_path.endswith(".rs") and ".unwrap()" in content and not file_path.endswith("test.rs"):
+        issues.append({
+            "severity": "WARNING",
+            "file": file_path,
+            "line": line_num,
+            "message": "Vi phạm Rust Safety: Dùng .unwrap() có thể gây panic. Dùng '?' hoặc match.",
+        })
+
+    # 4. Line length check (> 120 chars for code files)
+    code_exts = {".py", ".rs", ".js", ".ts", ".css"}
+    if len(raw_line) > 120 and Path(file_path).suffix in code_exts:
+        issues.append({
+            "severity": "NIT",
+            "file": file_path,
+            "line": line_num,
+            "message": f"Dòng code dài {len(raw_line)} ký tự (vượt ngưỡng khuyến nghị 100-120).",
+        })
+
+
+def check_git_diff(target: str | None = None) -> tuple[list[dict], set[str]]:
+    issues: list[dict] = []
+    changed_files: set[str] = set()
+
+    if target:
+        code, diff_text = run_cmd(["git", "diff", f"{target}...HEAD"])
+        if code != 0 or not diff_text.strip():
+            code, diff_text = run_cmd(["git", "diff", target])
+    else:
+        code, diff_text = run_cmd(["git", "diff", "HEAD"])
+        if not diff_text.strip():
+            code, diff_text = run_cmd(["git", "diff"])
 
     if not diff_text.strip():
-        return issues
+        return issues, changed_files
 
     current_file = ""
     line_num = 0
-
-    secret_regex = re.compile(
+    secret_re = re.compile(
         r"(api[_-]?key|secret|token|password|bearer)\s*[:=]\s*['\"][a-zA-Z0-9_\-\.]{8,}['\"]",
         re.IGNORECASE,
     )
-    broad_except_regex = re.compile(r"except(\s+Exception)?\s*:\s*pass")
-    python_func_no_type_regex = re.compile(r"^def\s+[a-z0-9_]+\([^)]*\)\s*:")
+    except_re = re.compile(r"except(\s+Exception)?\s*:\s*pass")
 
     for line in diff_text.splitlines():
         if line.startswith("+++ b/"):
             current_file = line[6:]
             line_num = 0
+            changed_files.add(current_file)
             continue
         if line.startswith("@@"):
             m = re.search(r"\+(\d+)", line)
             if m:
                 line_num = int(m.group(1))
             continue
-
         if line.startswith("+") and not line.startswith("+++"):
-            raw_line = line[1:]
-            content = raw_line.strip()
-
-            # 1. Secret check
-            if secret_regex.search(content) and not ("example" in current_file.lower() or "template" in current_file.lower()):
-                issues.append({
-                    "severity": "BLOCKER",
-                    "file": current_file,
-                    "line": line_num,
-                    "message": "Phát hiện potential secret / API token cứng trong mã nguồn.",
-                })
-
-            # 2. Broad except pass check (PEP 8 Exception handling)
-            if current_file.endswith(".py") and not current_file.endswith("runner.py") and broad_except_regex.search(content):
-                issues.append({
-                    "severity": "WARNING",
-                    "file": current_file,
-                    "line": line_num,
-                    "message": "Vi phạm PEP 8: Nuốt ngoại lệ âm thầm 'except: pass'. Phải log hoặc xử lý cụ thể.",
-                })
-
-            # 3. Rust unwrap risk check (Rust RFC 2436)
-            if current_file.endswith(".rs") and ".unwrap()" in content and not current_file.endswith("test.rs"):
-                issues.append({
-                    "severity": "WARNING",
-                    "file": current_file,
-                    "line": line_num,
-                    "message": "Vi phạm Rust Safety: Dùng .unwrap() có thể gây panic. Ưu tiên dùng '?' hoặc match.",
-                })
-
-            # 4. Line length check (> 120 chars for code files)
-            code_exts = {".py", ".rs", ".js", ".ts", ".css"}
-            if len(raw_line) > 120 and Path(current_file).suffix in code_exts:
-                issues.append({
-                    "severity": "NIT",
-                    "file": current_file,
-                    "line": line_num,
-                    "message": f"Dòng code dài {len(raw_line)} ký tự (vượt ngưỡng khuyến nghị 100-120).",
-                })
-
-            # 5. Type hint recommendation (PEP 484)
-            if current_file.endswith(".py") and python_func_no_type_regex.search(content) and not content.startswith("def test_"):
-                issues.append({
-                    "severity": "NIT",
-                    "file": current_file,
-                    "line": line_num,
-                    "message": "Khuyến nghị PEP 484: Hàm thiếu return type annotation (-> Type).",
-                })
-
+            _check_added_line(line[1:], current_file, line_num, issues, secret_re, except_re)
             line_num += 1
         elif not line.startswith("-"):
             line_num += 1
 
-    return issues
+    return issues, changed_files
 
 
-def check_python_syntax() -> list[dict]:
-    issues = []
-    py_files = list(Path("claraos").glob("**/*.py"))
+def check_python_syntax(files: list[Path] | None = None) -> list[dict]:
+    issues: list[dict] = []
+    py_files = files if files is not None else list(Path("claraos").glob("**/*.py"))
     for py in py_files:
+        if not py.exists():
+            continue
         code, out = run_cmd([sys.executable, "-m", "py_compile", str(py)])
         if code != 0:
             issues.append({
@@ -115,77 +126,101 @@ def check_python_syntax() -> list[dict]:
     return issues
 
 
-def check_file_length_limits() -> list[dict]:
-    issues = []
-    # Scan source code files (.py, .js, .rs, .html)
-    extensions = {".py", ".rs", ".js", ".html"}
-    ignored_patterns = {"resources", "node_modules", "target", ".git", ".venv", "apps.yaml"}
+def check_python_ast(py_files: list[Path]) -> list[dict]:
+    issues: list[dict] = []
+    for py in py_files:
+        if not py.exists() or not py.name.endswith(".py"):
+            continue
+        try:
+            with open(py, "r", encoding="utf-8") as f:
+                code_text = f.read()
+            tree = ast.parse(code_text, filename=str(py))
+        except (SyntaxError, Exception):
+            continue
 
-    for root, dirs, files in os.walk("."):
-        # Skip ignored dirs
-        dirs[:] = [d for d in dirs if d not in ignored_patterns and not d.startswith(".")]
-
-        for f in files:
-            path = Path(root) / f
-            if path.suffix in extensions and not any(ign in str(path) for ign in ignored_patterns):
-                try:
-                    with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-                        lines = len(fh.readlines())
-                    
-                    if lines > 500:
-                        issues.append({
-                            "severity": "WARNING",
-                            "file": str(path),
-                            "line": lines,
-                            "message": f"File dài {lines} dòng (vượt ngưỡng 500 dòng). Cần xem xét tách module.",
-                        })
-                    elif lines > 300:
-                        issues.append({
-                            "severity": "NIT",
-                            "file": str(path),
-                            "line": lines,
-                            "message": f"File dài {lines} dòng (vượt ngưỡng khuyến nghị 300 dòng).",
-                        })
-                except Exception:
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name.startswith("__") and node.name.endswith("__"):
                     continue
+
+                end_lineno = getattr(node, "end_lineno", node.lineno)
+                func_length = end_lineno - node.lineno + 1
+                if func_length > 50:
+                    issues.append({
+                        "severity": "WARNING",
+                        "file": str(py),
+                        "line": node.lineno,
+                        "message": f"Hàm '{node.name}' dài {func_length} dòng (vượt ngưỡng 50).",
+                    })
+
+                if not node.name.startswith("_") and not node.name.startswith("test_") and node.returns is None:
+                    issues.append({
+                        "severity": "NIT",
+                        "file": str(py),
+                        "line": node.lineno,
+                        "message": f"Khuyến nghị PEP 484: Hàm public '{node.name}' thiếu return type.",
+                    })
     return issues
 
 
-def main():
-    print("🔍 Đang rà soát mã nguồn & Coding Conventions ClaraOS...")
-    all_issues = []
+def check_file_length_limits(files_to_check: list[Path] | None = None) -> list[dict]:
+    issues: list[dict] = []
+    extensions = {".py", ".rs", ".js", ".html"}
+    ignored = {"resources", "node_modules", "target", ".git", ".venv", "apps.yaml"}
 
-    # 1. Check Python syntax
-    syntax_issues = check_python_syntax()
-    all_issues.extend(syntax_issues)
+    if files_to_check is not None:
+        file_list = [f for f in files_to_check if f.suffix in extensions and not any(k in str(f) for k in ignored)]
+    else:
+        file_list = []
+        for root, dirs, files in os.walk("."):
+            dirs[:] = [d for d in dirs if d not in ignored and not d.startswith(".")]
+            for f in files:
+                p = Path(root) / f
+                if p.suffix in extensions and not any(k in str(p) for k in ignored):
+                    file_list.append(p)
 
-    # 2. Check git diff patterns & conventions
-    diff_issues = check_git_diff()
-    all_issues.extend(diff_issues)
+    for path in file_list:
+        if not path.exists():
+            continue
+        try:
+            with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                lines = len(fh.readlines())
 
-    # 3. Check file length limits
-    length_issues = check_file_length_limits()
-    all_issues.extend(length_issues)
+            if lines > 500:
+                is_pure_logic = path.suffix in {".py", ".rs", ".js"}
+                sev = "BLOCKER" if is_pure_logic else "WARNING"
+                issues.append({
+                    "severity": sev,
+                    "file": str(path),
+                    "line": lines,
+                    "message": f"File dài {lines} dòng (vượt ngưỡng 500 dòng). Cần tách nhỏ.",
+                })
+            elif lines > 300:
+                issues.append({
+                    "severity": "WARNING",
+                    "file": str(path),
+                    "line": lines,
+                    "message": f"File dài {lines} dòng (vượt ngưỡng khuyến nghị 300 dòng).",
+                })
+        except Exception:
+            continue
 
-    if not all_issues:
-        print("✅ Hoàn thành rà soát: Không phát hiện lỗi cấu trúc, cú pháp hay rò rỉ bảo mật.")
-        return 0
+    return issues
 
-    print(f"\n📊 Báo cáo kết quả rà soát ({len(all_issues)} mục cần lưu ý):")
-    blockers = 0
-    warnings = 0
-    nits = 0
+
+def _render_summary(all_issues: list[dict]) -> int:
+    print(f"\n📊 Báo cáo kết quả rà soát ({len(all_issues)} mục):")
+    blockers, warnings, nits = 0, 0, 0
+    prefix_map = {"BLOCKER": "🔴 [BLOCKER]", "WARNING": "🟡 [WARNING]", "NIT": "🟢 [NIT]"}
 
     for issue in all_issues:
         sev = issue["severity"]
+        prefix = prefix_map.get(sev, "ℹ️ [INFO]")
         if sev == "BLOCKER":
-            prefix = "🔴 [BLOCKER]"
             blockers += 1
         elif sev == "WARNING":
-            prefix = "🟡 [WARNING]"
             warnings += 1
         else:
-            prefix = "🟢 [NIT]"
             nits += 1
 
         loc = f"{issue['file']}:{issue['line']}" if issue["line"] else issue["file"]
@@ -195,8 +230,34 @@ def main():
     if blockers > 0:
         print(f"❌ Có {blockers} vấn đề Blocker cần khắc phục trước khi commit!")
         return 1
-
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Code review & conventions auditor for ClaraOS.")
+    parser.add_argument("--target", default=None, help="Git target ref (e.g. master, HEAD^).")
+    parser.add_argument("--scan-all", action="store_true", help="Scan full project AST instead of diff.")
+    args = parser.parse_args()
+
+    target_desc = f"so với '{args.target}'" if args.target else "các thay đổi chưa commit"
+    print(f"🔍 Đang rà soát mã nguồn & Coding Conventions ClaraOS ({target_desc})...")
+    all_issues: list[dict] = []
+
+    diff_issues, changed_files = check_git_diff(args.target)
+    all_issues.extend(diff_issues)
+
+    if args.target and not args.scan_all and changed_files:
+        changed_py = [Path(f) for f in changed_files if f.endswith(".py")]
+        changed_paths = [Path(f) for f in changed_files]
+        all_issues.extend(check_python_syntax(changed_py))
+        all_issues.extend(check_python_ast(changed_py))
+        all_issues.extend(check_file_length_limits(changed_paths))
+    else:
+        all_issues.extend(check_python_syntax())
+        all_issues.extend(check_python_ast(list(Path("claraos").glob("**/*.py"))))
+        all_issues.extend(check_file_length_limits())
+
+    return _render_summary(all_issues)
 
 
 if __name__ == "__main__":
