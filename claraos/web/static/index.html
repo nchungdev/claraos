@@ -1150,7 +1150,7 @@
           mainActionBtnHtml = `
             <button onclick="event.stopPropagation(); openAppDirect('${app.id}')"
                     title="Mở ứng dụng"
-                    class="flex-1 h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-700/60 transition">
+                    class="h-8 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-700/60 transition">
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
               <span>Mở</span>
             </button>
@@ -1166,7 +1166,7 @@
           mainActionBtnHtml = `
             <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)"
                     title="Cài đặt ứng dụng"
-                    class="flex-1 h-8 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
+                    class="h-8 px-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
               <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
               <span>Cài đặt</span>
             </button>
@@ -1214,7 +1214,7 @@
               ${mainActionBtnHtml}
               <a href="${homepage.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();"
                  title="${homepage.label} của ${app.name}"
-                 class="h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/60 transition shrink-0">
+                 class="h-8 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/60 transition">
                 <i class="${homepage.icon} text-xs"></i>
                 <span>${homepage.label}</span>
               </a>
