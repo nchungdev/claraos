@@ -58,6 +58,15 @@ Run commands directly in the root workspace using standard tools. Always prefer 
    * No untyped `any` or broad catch blocks (`except Exception: pass`) without documented justification.
 5. **Verification Gate**:
    * Never declare a task complete without executing the relevant linters and test suites (`cargo test`) and verifying exit code 0.
+6. **File & Function Length Rules**:
+   * **File Length**: Target < 300 lines. Warning if 300–500 lines. Hard limit > 500 lines (requires modularization, except static seed data).
+   * **Function Length**: Target < 30 lines. Hard limit > 50 lines (must extract helper functions).
+   * **Line Width**: 88–100 chars (Ruff/PEP 8). Maximum 120 chars.
+7. **Canonical Coding Conventions**:
+   * **Python**: PEP 8 (`snake_case` functions/vars, `PascalCase` classes), PEP 484 (Type Hints mandatory on public functions).
+   * **Rust**: Rust Style Guide (RFC 2436), Clippy guidelines, no `.unwrap()` in runtime paths.
+   * **REST API**: RFC 9110 (plural resource nouns, semantic HTTP methods).
+   * **Commits**: Conventional Commits 1.0.0 (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
 
 ---
 
