@@ -58,7 +58,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
     },
     {
         "id": "rclone",
-        "name": "Rclone Web GUI",
+        "name": "Rclone",
         "category": "System",
         "description": "Quản lý đồng bộ Cloud Rclone & Google Drive tốc độ cao (Rclone Web GUI & VFS).",
         "icon": "fa-cloud-arrow-up",
