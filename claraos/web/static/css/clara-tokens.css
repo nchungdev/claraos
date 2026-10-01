@@ -1,0 +1,101 @@
+/* ==========================================================================
+   ClaraOS Design System Tokens & Atomic Utilities
+   ========================================================================== */
+
+:root {
+  /* Color Palette */
+  --clara-bg: #080c14;
+  --clara-surface: #0f172a;
+  --clara-surface-card: rgba(15, 23, 42, 0.75);
+  --clara-surface-card-hover: rgba(30, 41, 59, 0.85);
+  --clara-border: rgba(255, 255, 255, 0.08);
+  --clara-border-hover: rgba(255, 255, 255, 0.18);
+  --clara-border-active: rgba(6, 182, 212, 0.4);
+
+  /* Primary Brand Accents */
+  --clara-cyan: #06b6d4;
+  --clara-cyan-hover: #22d3ee;
+  --clara-cyan-glow: rgba(6, 182, 212, 0.25);
+  --clara-emerald: #10b981;
+  --clara-emerald-glow: rgba(16, 185, 129, 0.25);
+  --clara-rose: #f43f5e;
+  --clara-amber: #f59e0b;
+  --clara-purple: #a855f7;
+  --clara-blue: #3b82f6;
+
+  /* Typography */
+  --clara-font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --clara-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --clara-text-main: #f8fafc;
+  --clara-text-muted: #94a3b8;
+  --clara-text-dim: #64748b;
+
+  /* Layout Measurements */
+  --clara-sidebar-width: 256px;
+  --clara-header-height: 64px;
+}
+
+/* Base resets & typography */
+html, body {
+  background-color: var(--clara-bg);
+  color: var(--clara-text-main);
+  font-family: var(--clara-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Background Atmosphere */
+.clara-atmosphere {
+  background-color: var(--clara-bg);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism primitives */
+.glass-panel {
+  background: var(--clara-surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--clara-border);
+}
+
+.glass-card {
+  background: var(--clara-surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--clara-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: var(--clara-surface-card-hover);
+  border-color: var(--clara-border-hover);
+}
+
+/* Modern Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Glow & Indicator utilities */
+.glow-dot-cyan { box-shadow: 0 0 10px var(--clara-cyan); }
+.glow-dot-emerald { box-shadow: 0 0 10px var(--clara-emerald); }
+.glow-dot-rose { box-shadow: 0 0 10px var(--clara-rose); }

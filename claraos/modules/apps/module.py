@@ -39,7 +39,7 @@ class AppsModule(BaseModule):
                 app_id = app["id"].lower()
                 catalog_ids.add(app_id)
 
-                if app_id in ("cloud-sync", "media-organizer", "debrid-ingest", "omv"):
+                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv"):
                     catalog_with_status.append({
                         **app,
                         "installed": True,

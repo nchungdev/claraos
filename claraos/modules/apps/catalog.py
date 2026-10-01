@@ -2,19 +2,7 @@ from typing import Dict, Any, List
 
 APP_CATALOG: List[Dict[str, Any]] = [
     # 1. ClaraOS Specialized Services
-    {
-        "id": "cloud-sync",
-        "name": "DriveSync Pro",
-        "category": "System",
-        "description": "Quản lý đồng bộ Cloud Rclone & Google Drive tốc độ cao.",
-        "icon": "fa-cloud-arrow-up",
-        "logo_id": "rclone",
-        "default_port": 5572,
-        "subdomain": "rclone",
-        "installed": True,
-        "is_running": True,
-        "container_name": "cloudflared-rclone"
-    },
+
     {
         "id": "media-organizer",
         "name": "Media Organizer",
@@ -72,13 +60,16 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "id": "rclone",
         "name": "Rclone Web GUI",
         "category": "System",
-        "description": "Rclone RC Web Interface & VFS drive explorer.",
-        "icon": "fa-cloud",
+        "description": "Quản lý đồng bộ Cloud Rclone & Google Drive tốc độ cao (Rclone Web GUI & VFS).",
+        "icon": "fa-cloud-arrow-up",
         "logo_id": "rclone",
         "subdomain": "rclone",
         "default_port": 5572,
+        "installed": True,
+        "is_running": True,
         "protected": True,
-        "manageable": False
+        "manageable": False,
+        "container_name": "cloudflared-rclone"
     },
     # 3. Media Streaming & Request
     {

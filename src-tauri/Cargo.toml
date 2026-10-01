@@ -1,0 +1,19 @@
+[package]
+name = "claraos"
+version = "1.0.0"
+description = "ClaraOS - AI Homelab Operating System"
+authors = ["Chung Nguyen <chungnh@data1box.win>"]
+edition = "2021"
+
+[lib]
+name = "claraos_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = ["tray-icon"] }
+tauri-plugin-opener = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
