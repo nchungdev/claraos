@@ -1066,6 +1066,30 @@
       renderStoreItems();
     }
 
+    function getAppHomepage(app) {
+      if (app.homepage) return { url: app.homepage, label: 'Trang chủ', icon: 'fa-solid fa-globe' };
+      if (app.github) return { url: app.github, label: 'GitHub', icon: 'fa-brands fa-github' };
+
+      const img = app.image || '';
+      if (img.includes('ghcr.io/')) {
+        const clean = img.replace('ghcr.io/', '').split(':')[0];
+        return { url: `https://github.com/${clean}`, label: 'GitHub', icon: 'fa-brands fa-github' };
+      }
+      if (img.includes('lscr.io/linuxserver/')) {
+        const clean = img.replace('lscr.io/linuxserver/', '').split(':')[0];
+        return { url: `https://github.com/linuxserver/docker-${clean}`, label: 'GitHub', icon: 'fa-brands fa-github' };
+      }
+      if (img.includes('/')) {
+        const clean = img.split(':')[0];
+        return { url: `https://hub.docker.com/r/${clean}`, label: 'DockerHub', icon: 'fa-brands fa-docker' };
+      }
+      if (img) {
+        const clean = img.split(':')[0];
+        return { url: `https://hub.docker.com/_/${clean}`, label: 'DockerHub', icon: 'fa-brands fa-docker' };
+      }
+      return { url: `https://github.com/search?q=${encodeURIComponent(app.name)}`, label: 'GitHub', icon: 'fa-brands fa-github' };
+    }
+
     function renderStoreItems() {
       const container = document.getElementById('store-items-grid');
       if (!container) return;
@@ -1098,53 +1122,98 @@
       container.innerHTML = list.map(app => {
         const isInstalled = Boolean(app.installed);
         const canManage = app.manageable !== false && !app.protected;
-
-        let actionsHtml = '';
-        if (isInstalled) {
-          actionsHtml = canManage ? `
-            <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')" title="Gỡ cài đặt" class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30">
-              <i class="fa-solid fa-trash-can text-xs"></i>
-            </button>
-          ` : '';
-        } else {
-          actionsHtml = `
-            <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)" title="Cài đặt ứng dụng" class="h-8 px-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
-              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
-              <span>Cài</span>
-            </button>
-          `;
-        }
-
+        const homepage = getAppHomepage(app);
         const cardAction = `openAppDetail('${app.id}')`;
         const cardTitle = `${app.name} (Bấm để xem chi tiết ứng dụng)`;
         const logoUrl = app.logo || `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
         const imagePath = app.image || (app.container_name ? `${app.container_name}:latest` : '') || 'docker.io/library/custom:latest';
 
+        // Tag & Status
+        let statusBadgeHtml = '';
+        if (app.is_running) {
+          statusBadgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang chạy</span>`;
+        } else if (app.installed) {
+          statusBadgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Đã dừng</span>`;
+        } else {
+          statusBadgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60 shrink-0">Chưa cài</span>`;
+        }
+
+        // Actions: Cài đặt / Mở & Github (Home page)
+        let mainActionBtnHtml = '';
+        if (isInstalled) {
+          mainActionBtnHtml = `
+            <button onclick="event.stopPropagation(); openAppDirect('${app.id}')"
+                    title="Mở ứng dụng"
+                    class="flex-1 h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-700/60 transition">
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              <span>Mở</span>
+            </button>
+            ${canManage ? `
+              <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')"
+                      title="Gỡ cài đặt"
+                      class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 flex items-center justify-center transition border border-rose-500/30 shrink-0">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            ` : ''}
+          `;
+        } else {
+          mainActionBtnHtml = `
+            <button onclick="event.stopPropagation(); installAppFromStore('${app.id}', this)"
+                    title="Cài đặt ứng dụng"
+                    class="flex-1 h-8 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-600/20 transition">
+              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+              <span>Cài đặt</span>
+            </button>
+          `;
+        }
+
         return `
-          <div onclick="${cardAction}" title="${cardTitle}" class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-3.5 transition shadow-sm cursor-pointer group">
-            <div class="flex items-center gap-3.5 min-w-0">
-              <div class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2 shrink-0 flex items-center justify-center shadow group-hover:scale-105 transition-transform">
+          <div onclick="${cardAction}" title="${cardTitle}"
+               class="bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between gap-3.5 transition shadow-sm hover:shadow-md cursor-pointer group">
+            
+            <!-- 1. Title -->
+            <div class="flex items-center justify-between gap-2 border-b border-slate-800/70 pb-2.5">
+              <h4 class="font-bold text-sm sm:text-base text-white truncate group-hover:text-cyan-300 transition">${app.name}</h4>
+            </div>
+
+            <!-- 2. LOGO - Desc -->
+            <div class="flex items-start gap-3.5 min-w-0">
+              <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-slate-800/90 border border-slate-700/40 p-2 shrink-0 flex items-center justify-center shadow group-hover:scale-105 transition-transform">
                 <img src="${logoUrl}" 
                      alt="${app.name}" 
                      class="w-full h-full object-contain filter drop-shadow"
                      onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-xl\\'></i>';">
               </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <h4 class="font-bold text-sm text-white truncate group-hover:text-cyan-300 transition">${app.name}</h4>
-                  <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">${app.category}</span>
-                </div>
-                <p class="text-xs text-slate-400 truncate mt-0.5" title="${app.description || ''}">${app.description || 'Không có mô tả'}</p>
-                <div class="text-[10px] text-slate-500 font-mono mt-1 truncate flex items-center gap-1.5" title="${imagePath}">
-                  <i class="fa-brands fa-docker text-slate-600 text-xs shrink-0"></i>
-                  <span class="truncate">${imagePath}</span>
-                </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-slate-300/90 line-clamp-3 leading-relaxed" title="${app.description || ''}">
+                  ${app.description || 'Không có mô tả chi tiết cho ứng dụng này.'}
+                </p>
               </div>
             </div>
 
-            <div class="shrink-0 flex items-center gap-1.5">
-              ${actionsHtml}
+            <!-- 3. Tag & Status -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/60 shrink-0">${app.category}</span>
+              ${statusBadgeHtml}
             </div>
+
+            <!-- 4. Image Path -->
+            <div class="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1.5 bg-slate-950/60 px-2.5 py-1.5 rounded-xl border border-slate-800/80" title="${imagePath}">
+              <i class="fa-brands fa-docker text-cyan-400 text-xs shrink-0"></i>
+              <span class="truncate">${imagePath}</span>
+            </div>
+
+            <!-- 5. Actions: Cài đặt / Mở & Github (Home page) -->
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800/70">
+              ${mainActionBtnHtml}
+              <a href="${homepage.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();"
+                 title="${homepage.label} của ${app.name}"
+                 class="h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/60 transition shrink-0">
+                <i class="${homepage.icon} text-xs"></i>
+                <span>${homepage.label}</span>
+              </a>
+            </div>
+
           </div>
         `;
       }).join('');
