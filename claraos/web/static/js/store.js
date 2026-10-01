@@ -101,9 +101,19 @@
           mainActionBtnHtml = `
             <button onclick="event.stopPropagation(); openAppDirect('${app.id}')"
                     title="Mở ứng dụng"
-                    class="h-8 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-700/60 transition">
+                    class="h-8 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400
+                           hover:text-cyan-300 text-xs font-bold flex items-center justify-center
+                           gap-1.5 border border-slate-700/60 transition">
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
               <span>Mở</span>
+            </button>
+            <button onclick="event.stopPropagation(); openComposeEdit('${app.id}', '${app.compose_uuid || ''}')"
+                    title="Mở trang chỉnh sửa cấu hình Docker Compose trên OpenMediaVault"
+                    class="h-8 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300
+                           hover:text-white text-xs font-semibold flex items-center justify-center
+                           gap-1.5 border border-slate-700/60 transition">
+              <i class="fa-solid fa-sliders text-xs"></i>
+              <span>Config</span>
             </button>
             ${canManage ? `
               <button onclick="event.stopPropagation(); confirmUninstall('${app.id}', '${app.name}')"
@@ -314,12 +324,15 @@
             </button>
           `;
 
-          if (COMPOSE_FILE_UUIDS[app.id]) {
+          if (COMPOSE_FILE_UUIDS[app.id] || app.compose_uuid || app.installed) {
             html += `
-              <button onclick="openComposeEdit('${app.id}'); closeAppDetail();" 
+              <button onclick="openComposeEdit('${app.id}', '${app.compose_uuid || ''}'); closeAppDetail();" 
                       title="Sửa cấu hình Docker Compose trên OMV"
-                      class="w-10 h-10 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 rounded-xl transition flex items-center justify-center border border-slate-700/60 shadow-sm">
-                <i class="fa-solid fa-code text-sm"></i>
+                      class="h-10 px-3 bg-slate-800 hover:bg-slate-700 text-cyan-400
+                             hover:text-cyan-300 rounded-xl transition flex items-center justify-center
+                             gap-1.5 border border-slate-700/60 shadow-sm text-xs font-semibold">
+                <i class="fa-solid fa-sliders text-xs"></i>
+                <span>Config</span>
               </button>
             `;
           }

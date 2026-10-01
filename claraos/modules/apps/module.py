@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...core.module_base import BaseModule
+from ...infrastructure.apps.omv_registry_reader import OmvComposeRegistry
 from .catalog import APP_CATALOG, get_full_catalog, sync_community_catalog
 from .docker_client import docker_manager
 
@@ -20,7 +21,15 @@ class AppsModule(BaseModule):
     def __init__(self):
         super().__init__()
         self._router = APIRouter()
+        self._omv_registry = OmvComposeRegistry()
         self._setup_routes()
+
+    def _resolve_compose_uuids(self) -> Dict[str, str]:
+        uuid_map = {}
+        for s in self._omv_registry.list_services():
+            uuid_map[s.service_name.lower()] = s.compose_uuid
+            uuid_map[s.compose_name.lower().strip()] = s.compose_uuid
+        return uuid_map
 
     def _setup_routes(self):
         @self._router.get("/catalog")
@@ -33,6 +42,7 @@ class AppsModule(BaseModule):
                 for n in names:
                     container_map[n.lower()] = c
 
+            uuid_map = self._resolve_compose_uuids()
             catalog_with_status = []
             catalog_ids = set()
 
@@ -40,10 +50,16 @@ class AppsModule(BaseModule):
             for app in full_catalog:
                 app_id = app["id"].lower()
                 catalog_ids.add(app_id)
+                compose_uuid = (
+                    uuid_map.get(app_id)
+                    or uuid_map.get(app.get("container_name", "").lower())
+                    or ""
+                )
 
                 if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv"):
                     catalog_with_status.append({
                         **app,
+                        "compose_uuid": compose_uuid,
                         "installed": True,
                         "state": "running",
                         "container_id": app.get("container_name", app_id),
@@ -59,6 +75,7 @@ class AppsModule(BaseModule):
                 
                 catalog_with_status.append({
                     **app,
+                    "compose_uuid": compose_uuid,
                     "image": img,
                     "installed": installed,
                     "state": state,
@@ -92,7 +109,8 @@ class AppsModule(BaseModule):
                     "container_id": c.get("Id"),
                     "is_running": c.get("State") == "running",
                     "manageable": False,
-                    "protected": True
+                    "protected": True,
+                    "compose_uuid": uuid_map.get(name.lower(), "")
                 })
 
             return {

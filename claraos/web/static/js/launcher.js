@@ -17,12 +17,16 @@
       'media-organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
       'organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
       'cloud-sync': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
-      'rclone': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
-      'claraos': 'bdbf710a-9bf1-4ba6-ab52-617971cab3e4'
+      'rclone': '0122df61-d6f3-42f7-8b51-77a7c6c2739d',
+      'claraos': 'bdbf710a-9bf1-4ba6-ab52-617971cab3e4',
+      'metube': 'e867b36f-e3eb-460d-959c-70f90cb783db',
+      'tdarr': '7d391b10-2f19-4933-bf7b-94c65306e93a',
+      'ariang': '36b5ccf7-926b-4e1d-85fa-7f4153ca9812'
     };
 
-    function openComposeEdit(appId) {
-      const uuid = COMPOSE_FILE_UUIDS[appId];
+    function openComposeEdit(appId, appUuid = null) {
+      const app = (typeof appCatalogMap !== 'undefined' && appCatalogMap) ? appCatalogMap[appId] : null;
+      const uuid = appUuid || (app && app.compose_uuid) || COMPOSE_FILE_UUIDS[appId];
       const host = window.location.hostname;
       let omvBase = '';
       if (isLocalOrIp(host)) {
@@ -133,12 +137,13 @@
       `;
 
       // 2. Chỉnh sửa Docker Compose (nếu có cấu hình trong OpenMediaVault Compose)
-      if (COMPOSE_FILE_UUIDS[app.id]) {
+      if (COMPOSE_FILE_UUIDS[app.id] || app.compose_uuid || app.installed) {
         actionsHtml += `
-          <button onclick="openComposeEdit('${app.id}'); closeContextMenu();" 
-                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800 text-left transition">
-            <i class="fa-solid fa-code text-cyan-400 w-4 text-center"></i>
-            <span>Sửa Docker Compose</span>
+          <button onclick="openComposeEdit('${app.id}', '${app.compose_uuid || ''}'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200
+                         hover:text-white hover:bg-slate-800 text-left transition font-semibold">
+            <i class="fa-solid fa-sliders text-cyan-400 w-4 text-center"></i>
+            <span>Sửa cấu hình (OMV)</span>
           </button>
         `;
       }
