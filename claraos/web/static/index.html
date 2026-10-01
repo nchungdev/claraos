@@ -378,7 +378,7 @@
         </div>
 
         <!-- Action Buttons in Modal Footer -->
-        <div id="detail-app-actions" class="pt-2 flex items-center gap-2.5">
+        <div id="detail-app-actions" class="pt-2 flex items-center gap-2 w-full">
           <!-- Rendered dynamically -->
         </div>
       </div>
@@ -1277,9 +1277,10 @@
         if (app.installed || app.is_running) {
           html += `
             <button onclick="closeAppDetail(); openAppDirect('${app.id}');" 
-                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              <span>Mở ứng dụng</span>
+                    title="Mở ứng dụng"
+                    class="flex-1 h-10 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 whitespace-nowrap">
+              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+              <span>Mở</span>
             </button>
           `;
 
@@ -1287,9 +1288,8 @@
             html += `
               <button onclick="openComposeEdit('${app.id}'); closeAppDetail();" 
                       title="Sửa cấu hình Docker Compose trên OMV"
-                      class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
-                <i class="fa-solid fa-code"></i>
-                <span>Sửa Compose</span>
+                      class="w-10 h-10 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 rounded-xl transition flex items-center justify-center border border-slate-700/60 shadow-sm">
+                <i class="fa-solid fa-code text-sm"></i>
               </button>
             `;
           }
@@ -1300,42 +1300,38 @@
               html += `
                 <button onclick="controlApp('${app.id}', 'restart'); closeAppDetail();" 
                         title="Khởi động lại ứng dụng"
-                        class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
-                  <i class="fa-solid fa-rotate"></i>
-                  <span>Khởi động lại</span>
+                        class="w-10 h-10 shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition flex items-center justify-center border border-slate-700/60 shadow-sm">
+                  <i class="fa-solid fa-rotate text-sm"></i>
                 </button>
                 <button onclick="controlApp('${app.id}', 'stop'); closeAppDetail();" 
                         title="Dừng ứng dụng"
-                        class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-700/60">
-                  <i class="fa-solid fa-stop"></i>
-                  <span>Dừng ứng dụng</span>
+                        class="w-10 h-10 shrink-0 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 rounded-xl transition flex items-center justify-center border border-slate-700/60 shadow-sm">
+                  <i class="fa-solid fa-stop text-sm"></i>
                 </button>
               `;
             } else {
               html += `
                 <button onclick="controlApp('${app.id}', 'start'); closeAppDetail();" 
-                        title="Khởi động ứng dụng"
-                        class="py-2.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 font-semibold rounded-xl transition flex items-center gap-1.5 border border-emerald-500/30">
-                  <i class="fa-solid fa-play"></i>
-                  <span>Khởi động ứng dụng</span>
+                        title="Khởi chạy ứng dụng"
+                        class="w-10 h-10 shrink-0 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded-xl transition flex items-center justify-center border border-emerald-500/30 shadow-sm">
+                  <i class="fa-solid fa-play text-sm"></i>
                 </button>
               `;
             }
 
             html += `
               <button onclick="closeAppDetail(); confirmUninstall('${app.id}', '${app.name}');" 
-                      title="Gỡ cài đặt"
-                      class="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-semibold rounded-xl transition flex items-center gap-1.5 border border-rose-500/30">
-                <i class="fa-solid fa-trash-can"></i>
-                <span>Gỡ</span>
+                      title="Gỡ cài đặt ứng dụng"
+                      class="w-10 h-10 shrink-0 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl transition flex items-center justify-center border border-rose-500/30 shadow-sm">
+                <i class="fa-solid fa-trash-can text-sm"></i>
               </button>
             `;
           }
         } else {
           html += `
             <button onclick="closeAppDetail(); installAppFromStore('${app.id}', null);" 
-                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
-              <i class="fa-solid fa-cloud-arrow-down"></i>
+                    class="flex-1 h-10 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 whitespace-nowrap">
+              <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
               <span>Cài đặt ứng dụng</span>
             </button>
           `;
