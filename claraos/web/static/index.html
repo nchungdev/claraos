@@ -236,10 +236,22 @@
       </div>
     </div>
 
-    <!-- TAB: APPS & DOCKER -->
-    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 space-y-4">
-      <!-- App Launcher Grid (macOS Launchpad / iPadOS Style) -->
-      <div id="app-catalog-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-y-7 sm:gap-y-12 gap-x-2.5 sm:gap-x-8 justify-items-center w-full py-4 sm:py-8 px-1 sm:px-4">
+    <!-- TAB: COMPOSE-AWARE APP HUB -->
+    <div id="tab-apps" class="tab-pane p-3 sm:p-6 md:p-8 space-y-5 w-full overflow-y-auto">
+      <section class="glass-panel rounded-3xl p-5 sm:p-6 border border-slate-800/80">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-[11px] uppercase tracking-[0.2em] font-semibold text-cyan-300">Compose-aware App Hub</p>
+            <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white">Ứng dụng trên NAS</h2>
+            <p class="mt-1 text-sm text-slate-400">Năm workflow chính được ghim đầu trang; các dịch vụ Docker/OMV Compose khác tự xuất hiện bên dưới.</p>
+          </div>
+          <div class="text-xs text-slate-400 flex items-center gap-2 rounded-xl bg-slate-950/50 border border-slate-800 px-3 py-2">
+            <i class="fa-solid fa-layer-group text-cyan-400"></i>
+            Compose là nguồn cấu hình chính
+          </div>
+        </div>
+      </section>
+      <div id="app-catalog-grid" class="w-full">
         <div class="col-span-full py-12 text-center text-slate-500 text-sm">Đang tải danh sách ứng dụng...</div>
       </div>
     </div>
@@ -434,9 +446,12 @@
       'filebrowser': 'fead0825-8752-4ed6-b114-0335be6f3984',
       'file': 'fead0825-8752-4ed6-b114-0335be6f3984',
       'agy-manager': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
+      'agent': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
       'torbox': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'debrid-ingest': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
+      'debrid': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'media-organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
+      'organizer': '4447bde7-3520-447a-a095-0d2115b01ace',
       'cloud-sync': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
       'rclone': '9b5d3880-60b8-4c2f-b472-bb5cf202970a',
       'claraos': 'bdbf710a-9bf1-4ba6-ab52-617971cab3e4'
@@ -777,7 +792,7 @@
       catalog.forEach(app => {
         if (!app.native) {
           const sub = app.subdomain || app.id;
-          const origin = `${window.location.protocol}//${sub}.${baseDomain}`;
+          const origin = app.url || `${window.location.protocol}//${sub}.${baseDomain}`;
           
           if (!document.querySelector(`link[rel="dns-prefetch"][href="${origin}"]`)) {
             const dns = document.createElement('link');
@@ -877,6 +892,7 @@
     }
 
     function getAppUrl(app) {
+      if (app.url) return app.url;
       if (app.native) {
         return app.url;
       }
@@ -892,6 +908,9 @@
     }
 
     function getAppEndpointLabel(app) {
+      if (app.url) {
+        try { return new URL(app.url).hostname; } catch (e) { return app.url; }
+      }
       if (app.native) return 'Core Module';
       const host = window.location.hostname;
       if (isLocalOrIp(host)) {
@@ -1374,11 +1393,14 @@
       const grid = document.getElementById('app-catalog-grid');
       if (!grid) return;
 
-      // Only display apps that are installed or running on the desktop launcher
-      const desktopApps = catalog.filter(app => app.installed || app.is_running);
+      // CasaOS-like discovery: workflow apps first, then every Compose service.
+      const desktopApps = [...catalog]
+        .filter(app => app.installed || app.is_running || app.pinned)
+        .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || a.name.localeCompare(b.name));
+      grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-y-7 sm:gap-y-12 gap-x-2.5 sm:gap-x-8 justify-items-center w-full py-4 sm:py-8 px-1 sm:px-4';
 
       if (desktopApps.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Chưa có ứng dụng nào được cài đặt. Vào <button onclick="switchTab(\'store\')" class="text-cyan-400 underline font-semibold">App Store</button> để cài thêm.</div>';
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-sm">Docker socket chưa trả về service nào.</div>';
         return;
       }
 
@@ -1414,6 +1436,9 @@
             <!-- App Label / Name (macOS SF Typography style) -->
             <span class="font-medium text-[11px] sm:text-xs md:text-sm text-slate-100 mt-2 sm:mt-2.5 truncate w-full group-hover:text-cyan-300 transition text-center drop-shadow px-1">
               ${app.name}
+            </span>
+            <span class="mt-1 text-[9px] font-mono ${app.is_running ? 'text-emerald-400' : 'text-slate-500'} truncate max-w-full">
+              ${app.is_running ? '● running' : app.installed ? '● stopped' : '○ not installed'}
             </span>
 
           </div>

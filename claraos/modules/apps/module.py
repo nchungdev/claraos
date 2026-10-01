@@ -1,8 +1,13 @@
-import asyncio
+"""Compose-aware application discovery for ClaraOS."""
+
 import logging
-from typing import Dict, Any, List
+import os
+from typing import Any, Dict, List, Optional
+from xml.etree import ElementTree
+
+import yaml
+
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 from ...core.module_base import BaseModule
 from .catalog import APP_CATALOG
@@ -10,136 +15,176 @@ from .docker_client import docker_manager
 
 logger = logging.getLogger("claraos.modules.apps")
 
+# Infrastructure that supports ClaraOS itself is not an end-user app shortcut.
+INTERNAL_CONTAINERS = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web"}
+OMV_CONFIG_PATH = os.getenv("OMV_CONFIG_PATH", "/host/etc/openmediavault/config.xml")
+
+
+def _container_names(container: Dict[str, Any]) -> List[str]:
+    return [name.lstrip("/").lower() for name in container.get("Names", [])]
+
+
+def _compose_metadata(container: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    labels = container.get("Labels") or {}
+    return {
+        "compose_project": labels.get("com.docker.compose.project"),
+        "compose_working_dir": labels.get("com.docker.compose.project.working_dir"),
+        "compose_file": labels.get("com.docker.compose.project.config_files"),
+    }
+
+
+def _registered_omv_services(path: str = OMV_CONFIG_PATH) -> List[Dict[str, str]]:
+    """Read OMV's Compose registry without granting ClaraOS write access to it."""
+    if not os.path.isfile(path):
+        return []
+    try:
+        root = ElementTree.parse(path).getroot()
+    except (ElementTree.ParseError, OSError) as exc:
+        logger.warning("Cannot read OMV Compose registry at %s: %s", path, exc)
+        return []
+
+    services: List[Dict[str, str]] = []
+    for entry in root.findall("./services/compose/files/file"):
+        file_uuid = entry.findtext("uuid", default="")
+        file_name = entry.findtext("name", default="")
+        body = entry.findtext("body", default="")
+        try:
+            definition = yaml.safe_load(body) or {}
+        except yaml.YAMLError:
+            logger.warning("Skipping invalid Compose YAML in OMV registry entry %s", file_name)
+            continue
+        for service_name, service in (definition.get("services") or {}).items():
+            service = service if isinstance(service, dict) else {}
+            services.append({
+                "service_name": str(service_name),
+                "container_name": str(service.get("container_name") or service_name),
+                "compose_name": file_name,
+                "compose_uuid": file_uuid,
+            })
+    return services
+
 
 class AppsModule(BaseModule):
     name = "apps"
-    title = "App Store & Containers"
-    description = "Docker App Store & manager for Plex, *Arr stack, Komga & media tools"
-    icon = "puzzle-piece"
+    title = "App Hub"
+    description = "Compose-aware launcher for media, cloud and agent services"
+    icon = "shapes"
 
     def __init__(self):
         super().__init__()
         self._router = APIRouter()
         self._setup_routes()
 
+    @staticmethod
+    def _find_container(app: Dict[str, Any], containers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        expected = {app["id"].lower(), app.get("container_name", "").lower()}
+        expected.discard("")
+        return next((item for item in containers if expected.intersection(_container_names(item))), None)
+
     def _setup_routes(self):
         @self._router.get("/catalog")
         async def get_catalog():
             containers = await docker_manager.list_containers(all_containers=True)
-            container_map = {}
-            for c in containers:
-                names = [n.lstrip("/") for n in c.get("Names", [])]
-                for n in names:
-                    container_map[n.lower()] = c
+            registered = _registered_omv_services()
+            registered_by_container = {item["container_name"].lower(): item for item in registered}
+            catalog: List[Dict[str, Any]] = []
+            claimed_names = set()
 
-            catalog_with_status = []
-            catalog_ids = set()
-
+            # The five workflow services requested by the user always lead the hub.
+            # A stopped service remains visible so the dashboard never hides intent.
             for app in APP_CATALOG:
-                app_id = app["id"].lower()
-                catalog_ids.add(app_id)
-
-                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv"):
-                    catalog_with_status.append({
-                        **app,
-                        "installed": True,
-                        "state": "running",
-                        "container_id": app.get("container_name", app_id),
-                        "is_running": True
-                    })
-                    continue
-
-                c = container_map.get(app_id)
-                installed = c is not None
-                state = c.get("State", "stopped") if c else "not_installed"
-                cid = c.get("Id") if c else None
-                
-                catalog_with_status.append({
+                container = self._find_container(app, containers)
+                expected_name = app.get("container_name", app["id"])
+                claimed_names.add(expected_name.lower())
+                if container:
+                    claimed_names.update(_container_names(container))
+                state = container.get("State", "not_installed") if container else "not_installed"
+                compose = _compose_metadata(container) if container else {}
+                registry = registered_by_container.get(expected_name.lower())
+                if registry and not container:
+                    state = "registered"
+                catalog.append({
                     **app,
-                    "installed": installed,
+                    **compose,
+                    "compose_name": registry.get("compose_name") if registry else compose.get("compose_project"),
+                    "compose_uuid": registry.get("compose_uuid") if registry else None,
+                    "source": "OMV Compose" if (registry or compose.get("compose_project")) else "Managed service",
+                    "installed": container is not None or registry is not None,
                     "state": state,
-                    "container_id": cid,
-                    "is_running": state == "running"
+                    "container_id": container.get("Id") if container else None,
+                    "is_running": state == "running",
                 })
 
-            # Auto-discover any active docker containers on NAS not in static catalog
-            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker"}
-            for name, c in container_map.items():
-                if name in catalog_ids or name in ignored_containers:
+            # CasaOS-like discovery: show every existing service, but keep the
+            # Compose project as its owner instead of pretending ClaraOS owns it.
+            for container in containers:
+                names = _container_names(container)
+                name = names[0] if names else container.get("Id", "unknown")[:12]
+                if name in INTERNAL_CONTAINERS or any(item in claimed_names for item in names):
                     continue
-                # Extract primary public port if available
-                public_port = 80
-                for p in c.get("Ports", []):
-                    if isinstance(p, dict) and p.get("PublicPort"):
-                        public_port = p["PublicPort"]
-                        break
-
-                catalog_with_status.append({
-                    "id": name,
-                    "name": name.capitalize(),
-                    "category": "Docker",
-                    "description": f"Container {name} on NAS ({c.get('Image', '')})",
+                compose = _compose_metadata(container)
+                state = container.get("State", "not_installed")
+                catalog.append({
+                    "id": f"discovered-{name}",
+                    "name": name,
+                    "category": "Đã phát hiện",
+                    "description": f"{compose.get('compose_project') or 'Docker'} · {container.get('Image', 'unknown image')}",
                     "icon": "fa-cube",
                     "logo_id": name,
-                    "default_port": public_port,
+                    "container_name": name,
                     "installed": True,
-                    "state": c.get("State", "running"),
-                    "container_id": c.get("Id"),
-                    "is_running": c.get("State") == "running",
+                    "state": state,
+                    "container_id": container.get("Id"),
+                    "is_running": state == "running",
                     "manageable": False,
-                    "protected": True
+                    "protected": True,
+                    "discovered": True,
+                    "source": "OMV Compose" if compose.get("compose_project") else "Docker",
+                    **compose,
+                })
+
+            # Include Compose definitions which OMV has registered but which do
+            # not currently have a container (for example, a stopped stack).
+            known = claimed_names | {name for container in containers for name in _container_names(container)}
+            for service in registered:
+                name = service["container_name"].lower()
+                if name in INTERNAL_CONTAINERS or name in known:
+                    continue
+                catalog.append({
+                    "id": f"omv-{service['compose_uuid']}-{service['service_name']}",
+                    "name": service["service_name"],
+                    "category": "Đã phát hiện",
+                    "description": f"OMV Compose · {service['compose_name']} (chưa có container runtime)",
+                    "icon": "fa-cube",
+                    "logo_id": service["service_name"],
+                    "container_name": service["container_name"],
+                    "installed": True,
+                    "state": "registered",
+                    "container_id": None,
+                    "is_running": False,
+                    "manageable": False,
+                    "protected": True,
+                    "discovered": True,
+                    "source": "OMV Compose",
+                    "compose_name": service["compose_name"],
+                    "compose_uuid": service["compose_uuid"],
                 })
 
             return {
-                "catalog": catalog_with_status,
-                "docker_available": bool(containers) or bool(docker_manager._get_client())
+                "catalog": catalog,
+                "docker_available": bool(containers) or bool(docker_manager._get_client()),
+                "omv_compose_available": os.path.isfile(OMV_CONFIG_PATH),
             }
 
         @self._router.post("/{app_id}/{action}")
         async def app_action(app_id: str, action: str):
-            app = next((a for a in APP_CATALOG if a["id"].lower() == app_id.lower()), None)
-            if not app:
-                raise HTTPException(status_code=404, detail="App not found in catalog")
-
-            if app.get("native"):
-                return {"status": "success", "message": f"{app['name']} is a native ClaraOS service."}
-
-            containers = await docker_manager.list_containers(all_containers=True)
-            c = next((item for item in containers if any(n.lstrip("/").lower() == app_id.lower() for n in item.get("Names", []))), None)
-
+            # Avoid creating docker-run drift alongside an OMV Compose managed NAS.
             if action == "install":
-                if c:
-                    raise HTTPException(status_code=400, detail="Container is already installed")
-                ok = await docker_manager.pull_and_run(
-                    image=app["image"],
-                    name=app["id"],
-                    ports=app["ports"],
-                    volumes=app["volumes"],
-                    env=app["env"]
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cài mới qua template OMV Compose để giữ volumes, secrets và update policy trong một nơi.",
                 )
-                if not ok:
-                    raise HTTPException(status_code=500, detail="Failed to deploy container")
-                return {"status": "ok", "action": "installed"}
-
-            if not c:
-                raise HTTPException(status_code=404, detail="Container is not installed on this server")
-
-            cid = c["Id"]
-            if action == "start":
-                ok = await docker_manager.start_container(cid)
-            elif action == "stop":
-                ok = await docker_manager.stop_container(cid)
-            elif action == "restart":
-                ok = await docker_manager.restart_container(cid)
-            elif action == "uninstall":
-                ok = await docker_manager.remove_container(cid)
-            else:
-                raise HTTPException(status_code=400, detail="Invalid action")
-
-            if not ok:
-                raise HTTPException(status_code=500, detail=f"Failed to {action} container")
-
-            return {"status": "ok", "app_id": app_id, "action": action}
+            raise HTTPException(status_code=405, detail="Quản lý vòng đời service này từ OMV Compose.")
 
     async def start(self) -> bool:
         self.is_running = True

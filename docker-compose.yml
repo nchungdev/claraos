@@ -23,3 +23,6 @@ services:
       - /proc:/proc:ro
       # Mount host Docker Socket to enable App Store (Plex, Sonarr, etc.):
       - /var/run/docker.sock:/var/run/docker.sock
+      # Read-only registry: lets ClaraOS list every stack registered in OMV
+      # Compose, including stacks without a running container.
+      - /etc/openmediavault/config.xml:/host/etc/openmediavault/config.xml:ro
