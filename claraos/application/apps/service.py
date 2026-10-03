@@ -6,11 +6,11 @@ from typing import Any, Dict, List, Optional
 from ...domain.apps.entities import AppDefinition, ComposeService
 from ...domain.apps.ports import CatalogRepository, ComposeRegistry, ContainerGateway
 
-INTERNAL_CONTAINERS = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web"}
+INTERNAL_CONTAINERS = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "agy-manager"}
 DISPLAY_NAMES = {
     "calibre-web": "Calibre Web", "filebrowser": "FileBrowser", "flaresolverr": "FlareSolverr",
     "jellyseerr": "Jellyseerr", "metube": "MeTube", "openlist": "OpenList",
-    "ariang": "AriaNg", "agy-manager": "AGY Manager",
+    "ariang": "AriaNg",
 }
 
 

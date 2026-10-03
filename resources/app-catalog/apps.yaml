@@ -47,13 +47,15 @@ apps:
     subdomain: ariang
     installable: false
 
-  - id: agent
-    name: Agent
+  - id: agent-hub
+    name: Clara
     category: Automation
-    description: Điều phối AGY Manager và tác vụ agent.
-    container_name: agy-manager
-    icon: fa-robot
-    logo_id: anthropic
-    default_port: 8585
-    subdomain: agy
+    description: Clara — điều phối Antigravity, Claude Code và Codex.
+    container_name: agent-hub
+    container_aliases: [clara, nexus-ai]
+    icon: fa-brain
+    logo: /icons/clara.svg
+    logo_id: clara
+    default_port: 8088
+    subdomain: agent
     installable: false

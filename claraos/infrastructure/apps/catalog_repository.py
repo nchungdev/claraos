@@ -35,4 +35,6 @@ class YamlCatalogRepository:
             installable=bool(item.get("installable", False)),
             image=item.get("image"),
             template=item.get("template"),
+            logo=item.get("logo"),
+            subdomain=item.get("subdomain"),
         )

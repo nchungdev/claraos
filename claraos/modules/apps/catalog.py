@@ -48,17 +48,20 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "openmediavault:host"
     },
     {
-        "id": "agy-manager",
-        "name": "Agent Hub",
+        "id": "agent-hub",
+        "name": "Clara",
         "category": "System",
-        "description": "Antigravity Multi-Agent orchestration & session manager.",
-        "icon": "fa-robot",
-        "logo_id": "anthropic",
-        "subdomain": "agy",
-        "default_port": 8585,
+        "description": "Clara — điều phối Antigravity, Claude Code và Codex.",
+        "icon": "fa-brain",
+        "logo": "/icons/clara.svg",
+        "logo_id": "clara",
+        "subdomain": "agent",
+        "default_port": 8088,
         "protected": True,
         "manageable": False,
-        "image": "ghcr.io/nchungdev/antigravity-manager:latest"
+        "installed": True,
+        "is_running": True,
+        "image": "native:agent-hub"
     },
     {
         "id": "rclone",

@@ -9,8 +9,6 @@
       'jellyseerr': '9a18f138-fa1c-4737-9b57-7fd8a2321f46',
       'filebrowser': 'fead0825-8752-4ed6-b114-0335be6f3984',
       'file': 'fead0825-8752-4ed6-b114-0335be6f3984',
-      'agy-manager': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
-      'agent': 'ff0639fa-7d27-494c-9eb3-e773c16c2033',
       'torbox': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'debrid-ingest': '17844f34-f4a5-4d55-a204-69c27b1f78f2',
       'debrid': '17844f34-f4a5-4d55-a204-69c27b1f78f2',

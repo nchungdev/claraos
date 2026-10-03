@@ -19,6 +19,8 @@ class AppDefinition:
     installable: bool = False
     image: Optional[str] = None
     template: Optional[str] = None
+    logo: Optional[str] = None
+    subdomain: Optional[str] = None
 
 
 @dataclass(frozen=True)

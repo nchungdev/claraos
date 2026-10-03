@@ -56,7 +56,10 @@ class AppsModule(BaseModule):
                     or ""
                 )
 
-                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv"):
+                if app_id == "agy-manager":
+                    continue
+
+                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub"):
                     catalog_with_status.append({
                         **app,
                         "compose_uuid": compose_uuid,
@@ -84,7 +87,7 @@ class AppsModule(BaseModule):
                 })
 
             # Auto-discover any active docker containers on NAS not in static catalog
-            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker", "flaresolverr"}
+            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker", "flaresolverr", "agy-manager"}
             for name, c in container_map.items():
                 if name in catalog_ids or name in ignored_containers:
                     continue
