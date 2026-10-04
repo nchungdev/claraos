@@ -79,8 +79,8 @@ def main():
     apply(render(build()))
     while True:
         p = subprocess.Popen(["docker", "events", "--filter", "type=container",
-                              "--filter", "event=start", "--filter", "event=die", "--filter", "event=destroy",
-                              "--format", "{{.ID}}"], stdout=subprocess.PIPE, text=True)
+                              "--filter", "event=start", "--filter", "event=die", "--filter", "event=destroy", "--filter", "event=rename",
+                              "--format", "{{.Action}}"], stdout=subprocess.PIPE, text=True)
         for _ in p.stdout:
             time.sleep(3)  # debounce bursts
             try:
