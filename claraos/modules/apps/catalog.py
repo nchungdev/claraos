@@ -28,8 +28,31 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "subdomain": "debrid",
         "installed": True,
         "is_running": True,
-        "container_name": "torbox-worker",
+        "container_name": "debrid-manager",
         "image": "ghcr.io/nchungdev/debrid-manager:latest"
+    },
+    {
+        "id": "rss-hub",
+        "name": "RSS Hub",
+        "category": "Tools",
+        "description": "Multi-source RSS/JSON/Atom feed wrapper cho Threads, communities và web scrapers.",
+        "icon": "fa-rss",
+        "logo_id": "rss",
+        "default_port": 8098,
+        "subdomain": "rss",
+        "installed": True,
+        "is_running": True,
+        "container_name": "rss-hub",
+        "image": "ghcr.io/nchungdev/rss-hub:latest",
+        "ports": {"8098": "8098"},
+        "volumes": [
+            "/appdata/rss-hub/data:/app/data",
+            "/home/chungnh/scripts/threads_rss/.session_cookie:/app/config/.session_cookie:ro"
+        ],
+        "env": [
+            "BASE_URL=https://rss.data1box.win",
+            "FLARESOLVERR_URL=http://flaresolverr:8191/v1"
+        ]
     },
     # 2. Existing NAS Host & Core Services
     {
@@ -90,7 +113,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/plex:latest",
         "default_port": 32400,
         "ports": {"32400": "32400"},
-        "volumes": ["/srv/mergerfs/MainPool:/media", "/config/plex:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim:/media", "/appdata/plex:/config"],
         "env": ["PUID=1000", "PGID=1000", "VERSION=docker"]
     },
     {
@@ -103,7 +126,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "jellyfin/jellyfin:latest",
         "default_port": 8096,
         "ports": {"8096": "8096"},
-        "volumes": ["/srv/mergerfs/MainPool:/media", "/config/jellyfin:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim:/media", "/appdata/jellyfin:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -116,7 +139,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "fallenbagel/jellyseerr:latest",
         "default_port": 5055,
         "ports": {"5055": "5055"},
-        "volumes": ["/config/jellyseerr:/app/config"],
+        "volumes": ["/appdata/jellyseerr:/app/config"],
         "env": ["LOG_LEVEL=info"]
     },
     # 4. Automation & *Arr Stack
@@ -130,7 +153,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/sonarr:latest",
         "default_port": 8989,
         "ports": {"8989": "8989"},
-        "volumes": ["/srv/mergerfs/MainPool/Phim/TV:/tv", "/config/sonarr:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim/TV Shows:/tv", "/appdata/sonarr:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -143,7 +166,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/radarr:latest",
         "default_port": 7878,
         "ports": {"7878": "7878"},
-        "volumes": ["/srv/mergerfs/MainPool/Phim/Movies:/movies", "/config/radarr:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim/Movies:/movies", "/appdata/radarr:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -156,7 +179,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/prowlarr:latest",
         "default_port": 9696,
         "ports": {"9696": "9696"},
-        "volumes": ["/config/prowlarr:/config"],
+        "volumes": ["/appdata/prowlarr:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -169,7 +192,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "ghcr.io/haveagitgat/tdarr:latest",
         "default_port": 8265,
         "ports": {"8265": "8265"},
-        "volumes": ["/srv/mergerfs/MainPool:/media", "/config/tdarr:/app/configs"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim:/media", "/appdata/tdarr:/app/configs"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     # 5. Books, Comics & Manga
@@ -183,7 +206,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "gotson/komga:latest",
         "default_port": 25600,
         "ports": {"25600": "25600"},
-        "volumes": ["/srv/mergerfs/MainPool/Truyen:/data", "/config/komga:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Truyen:/data", "/appdata/komga:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -196,7 +219,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "jvmilazz0/kavita:latest",
         "default_port": 5000,
         "ports": {"5000": "5000"},
-        "volumes": ["/srv/mergerfs/MainPool/Truyen:/data", "/config/kavita:/kavita/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Truyen:/data", "/appdata/kavita:/kavita/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -209,7 +232,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/calibre-web:latest",
         "default_port": 8083,
         "ports": {"8083": "8083"},
-        "volumes": ["/srv/mergerfs/MainPool/Books:/books", "/config/calibre-web:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Books:/books", "/appdata/calibre-web:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     # 6. File Management & Download Tools
@@ -223,7 +246,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "filebrowser/filebrowser:latest",
         "default_port": 8080,
         "ports": {"8080": "80"},
-        "volumes": ["/srv/mergerfs/MainPool:/srv", "/config/filebrowser:/config"],
+        "volumes": ["/srv/mergerfs/MainPool:/srv", "/appdata/filebrowser:/config"],
         "env": []
     },
     {
@@ -236,7 +259,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "openlistteam/openlist:latest",
         "default_port": 5244,
         "ports": {"5244": "5244"},
-        "volumes": ["/config/openlist:/app/data"],
+        "volumes": ["/appdata/openlist:/app/data"],
         "env": []
     },
     {
@@ -285,7 +308,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/qbittorrent:latest",
         "default_port": 8085,
         "ports": {"8085": "8080", "6881": "6881"},
-        "volumes": ["/srv/mergerfs/MainPool/Downloads:/downloads", "/config/qbittorrent:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Downloads:/downloads", "/appdata/qbittorrent:/config"],
         "env": ["PUID=1000", "PGID=1000", "WEBUI_PORT=8080"]
     },
     {
@@ -298,7 +321,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "lscr.io/linuxserver/bazarr:latest",
         "default_port": 6767,
         "ports": {"6767": "6767"},
-        "volumes": ["/srv/mergerfs/MainPool/Phim:/movies", "/config/bazarr:/config"],
+        "volumes": ["/srv/mergerfs/MainPool/Phim:/movies", "/appdata/bazarr:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     {
@@ -311,7 +334,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "vaultwarden/server:latest",
         "default_port": 8088,
         "ports": {"8088": "80"},
-        "volumes": ["/config/vaultwarden:/data"],
+        "volumes": ["/appdata/vaultwarden:/data"],
         "env": []
     }
 ]
@@ -399,9 +422,9 @@ def sync_community_catalog() -> int:
                 volumes = []
                 for v in t.get("volumes", []):
                     if isinstance(v, dict) and v.get("container"):
-                        volumes.append(f"/config/{app_id}:{v['container']}")
+                        volumes.append(f"/appdata/{app_id}:{v['container']}")
                 if not volumes:
-                    volumes = [f"/config/{app_id}:/config"]
+                    volumes = [f"/appdata/{app_id}:/config"]
 
                 cat = map_category(t.get("categories", []))
 

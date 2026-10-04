@@ -17,7 +17,7 @@ apps:
     category: Download workflow
     description: Quản lý debrid queue; TorBox là một adapter tải cloud.
     container_name: debrid-manager
-    container_aliases: [torbox-worker]
+    container_aliases: [debrid-manager, torbox-worker]
     icon: fa-cloud-arrow-down
     logo_id: torbox
     default_port: 8092
@@ -25,6 +25,19 @@ apps:
     installable: true
     image: ghcr.io/nchungdev/debrid-manager:latest
     template: templates/debrid-manager.yml
+
+  - id: rss-hub
+    name: RSS Hub
+    category: Tools
+    description: Multi-source RSS/JSON/Atom feed wrapper cho Threads, communities và web scrapers.
+    container_name: rss-hub
+    icon: fa-rss
+    logo_id: rss
+    default_port: 8098
+    subdomain: rss
+    installable: true
+    image: ghcr.io/nchungdev/rss-hub:latest
+    template: templates/rss-hub.yml
 
   - id: rclone
     name: Rclone

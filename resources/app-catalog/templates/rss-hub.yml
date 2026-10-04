@@ -1,0 +1,25 @@
+services:
+  rss-hub:
+    image: ghcr.io/nchungdev/rss-hub:latest
+    container_name: rss-hub
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - BASE_URL=https://rss.data1box.win
+      - FLARESOLVERR_URL=http://host.docker.internal:8191/v1
+      - RSSHUB_UPSTREAM=http://rsshub-core:1200
+      - SCRAPE_INTERVAL_MINUTES=30
+    volumes:
+      - /appdata/rss-hub/data:/app/data
+      - /appdata/rss-hub/config:/app/config
+
+  rsshub-core:
+    image: diygod/rsshub:latest
+    container_name: rsshub-core
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - CACHE_TYPE=memory
