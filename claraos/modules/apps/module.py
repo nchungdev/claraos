@@ -87,7 +87,7 @@ class AppsModule(BaseModule):
                 })
 
             # Auto-discover any active docker containers on NAS not in static catalog
-            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "torbox-worker", "flaresolverr", "agy-manager"}
+            ignored_containers = {"claraos", "wildcard-gateway", "cloudflared-dashboard", "dashboard-web", "debrid-manager", "torbox-worker", "flaresolverr", "agy-manager", "rsshub-core"}
             for name, c in container_map.items():
                 if name in catalog_ids or name in ignored_containers:
                     continue
@@ -126,6 +126,90 @@ class AppsModule(BaseModule):
             count = await asyncio.to_thread(sync_community_catalog)
             return {"status": "ok", "synced_count": count}
 
+        class InstallPayload(BaseModel):
+            ports: Dict[str, str] = None
+            volumes: List[str] = None
+            wipe_existing_data: bool = False
+
+        class UninstallPayload(BaseModel):
+            purge_data: bool = False
+
+        @self._router.get("/{app_id}/setup-schema")
+        async def get_app_setup_schema(app_id: str):
+            app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
+            if not app:
+                raise HTTPException(status_code=404, detail="App not found in catalog")
+
+            # Check if previous data exists on host at /appdata/{app_id}
+            has_existing_data = await docker_manager.check_app_config_exists(app["id"])
+            return {
+                "id": app["id"],
+                "name": app["name"],
+                "image": app.get("image", ""),
+                "default_port": app.get("default_port"),
+                "ports": app.get("ports", {}),
+                "volumes": app.get("volumes", []),
+                "env": app.get("env", []),
+                "has_existing_data": has_existing_data,
+                "config_path": f"/appdata/{app['id']}"
+            }
+
+        @self._router.post("/{app_id}/install")
+        async def install_app(app_id: str, payload: InstallPayload = None):
+            app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
+            if not app:
+                raise HTTPException(status_code=404, detail="App not found in catalog")
+            if app.get("native"):
+                return {"status": "success", "message": f"{app['name']} is a native ClaraOS service."}
+
+            containers = await docker_manager.list_containers(all_containers=True)
+            c = next((item for item in containers if any(n.lstrip("/").lower() == app_id.lower() for n in item.get("Names", []))), None)
+            if c:
+                raise HTTPException(status_code=400, detail="Container is already installed")
+
+            # Determine ports & volumes
+            target_ports = payload.ports if (payload and payload.ports is not None) else app.get("ports", {})
+            target_volumes = payload.volumes if (payload and payload.volumes is not None) else app.get("volumes", [])
+            wipe_existing = payload.wipe_existing_data if payload else False
+
+            if wipe_existing:
+                logger.info(f"Wiping existing config for '{app['id']}' before clean install...")
+                await docker_manager.purge_app_config(app["id"])
+
+            ok = await docker_manager.pull_and_run(
+                image=app["image"],
+                name=app["id"],
+                ports=target_ports,
+                volumes=target_volumes,
+                env=app.get("env", [])
+            )
+            if not ok:
+                raise HTTPException(status_code=500, detail="Failed to deploy container")
+            return {"status": "ok", "action": "installed"}
+
+        @self._router.post("/{app_id}/uninstall")
+        async def uninstall_app(app_id: str, payload: UninstallPayload = None):
+            app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
+            if not app:
+                raise HTTPException(status_code=404, detail="App not found in catalog")
+
+            containers = await docker_manager.list_containers(all_containers=True)
+            c = next((item for item in containers if any(n.lstrip("/").lower() == app_id.lower() for n in item.get("Names", []))), None)
+            if not c:
+                raise HTTPException(status_code=404, detail="Container is not installed on this server")
+
+            cid = c["Id"]
+            ok = await docker_manager.remove_container(cid)
+            if not ok:
+                raise HTTPException(status_code=500, detail="Failed to remove container")
+
+            purged = False
+            if payload and payload.purge_data:
+                logger.info(f"User requested data purge for '{app_id}'")
+                purged = await docker_manager.purge_app_config(app_id)
+
+            return {"status": "ok", "app_id": app_id, "action": "uninstalled", "purged": purged}
+
         @self._router.post("/{app_id}/{action}")
         async def app_action(app_id: str, action: str):
             app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
@@ -139,18 +223,7 @@ class AppsModule(BaseModule):
             c = next((item for item in containers if any(n.lstrip("/").lower() == app_id.lower() for n in item.get("Names", []))), None)
 
             if action == "install":
-                if c:
-                    raise HTTPException(status_code=400, detail="Container is already installed")
-                ok = await docker_manager.pull_and_run(
-                    image=app["image"],
-                    name=app["id"],
-                    ports=app["ports"],
-                    volumes=app["volumes"],
-                    env=app["env"]
-                )
-                if not ok:
-                    raise HTTPException(status_code=500, detail="Failed to deploy container")
-                return {"status": "ok", "action": "installed"}
+                return await install_app(app_id, None)
 
             if not c:
                 raise HTTPException(status_code=404, detail="Container is not installed on this server")
@@ -163,7 +236,7 @@ class AppsModule(BaseModule):
             elif action == "restart":
                 ok = await docker_manager.restart_container(cid)
             elif action == "uninstall":
-                ok = await docker_manager.remove_container(cid)
+                return await uninstall_app(app_id, None)
             else:
                 raise HTTPException(status_code=400, detail="Invalid action")
 
