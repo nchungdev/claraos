@@ -66,6 +66,13 @@ def quality_of(name):
     return res_of(name), src, (c.group(1).lower() if c else None)
 
 
+def tag_of(fname):
+    """Source tag of a file: ' - [WeTV].mkv' (suffix scheme) or a leading '[Hall_of_C] ...' release group."""
+    stem = os.path.splitext(fname)[0]
+    m = re.search(r" - \[([^\]]+)\]\s*$", stem) or re.match(r"\s*\[([^\]]+)\]", stem)
+    return m.group(1).strip() if m else None
+
+
 def episode_of(name):
     for rx in EP_RES:
         m = rx.search(name)
@@ -123,7 +130,17 @@ def init(c):
       path TEXT PRIMARY KEY, key TEXT, season INTEGER, episode INTEGER, episode_end INTEGER,
       resolution INTEGER, source TEXT, codec TEXT, size INTEGER, mtime REAL);
     CREATE INDEX IF NOT EXISTS files_key ON files(key);
+    """)
+    if "tag" not in {r[1] for r in c.execute("PRAGMA table_info(files)")}:
+        c.execute("ALTER TABLE files ADD COLUMN tag TEXT")
+    c.executescript("""
     CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
+    CREATE TABLE IF NOT EXISTS org_files (
+      basename TEXT, kind TEXT, tmdb_id INTEGER, tvdb_id INTEGER, season INTEGER, episode INTEGER, title TEXT,
+      library_path TEXT, status TEXT, library_status TEXT);
+    CREATE INDEX IF NOT EXISTS org_files_basename ON org_files(basename);
+    CREATE TABLE IF NOT EXISTS tmdb_aliases (title_norm TEXT, kind TEXT, tmdb_id INTEGER, PRIMARY KEY (title_norm, kind));
+    CREATE TABLE IF NOT EXISTS tmdb_tvdb (tmdb_id INTEGER PRIMARY KEY, tvdb_id INTEGER);
     """)
 
 
@@ -162,39 +179,47 @@ def scan_title(c, kind, folder, name):
             if res is None:
                 res = quality_of(os.path.basename(dirpath))[0]
             ep = episode_of(f) if kind == "tv" else None
-            c.execute("INSERT OR REPLACE INTO files VALUES (?,?,?,?,?,?,?,?,?,?)",
-                      (p, key, ep[0] if ep else None, ep[1] if ep else None, ep[2] if ep else None, res, src, codec, st.st_size, st.st_mtime))
+            c.execute("INSERT OR REPLACE INTO files (path,key,season,episode,episode_end,resolution,source,codec,size,mtime,tag) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                      (p, key, ep[0] if ep else None, ep[1] if ep else None, ep[2] if ep else None, res, src, codec, st.st_size, st.st_mtime, tag_of(f)))
     return True
 
 
-def organizer_aliases(c):
-    """Names the Media Organizer already matched: staging file name -> library folder. Gives English release titles."""
+def sync_organizer(c):
+    """Mirror what the Media Organizer knows (staging file -> TMDb id / season / episode / library path, plus the
+    title aliases the user taught it). TMDb ids survive renames, so Debrid can match a torrent to the library even
+    after the organizer renamed the file."""
     if not os.path.isfile(ORGANIZER_DB):
         return 0
     try:
-        o = sqlite3.connect(f"file:{ORGANIZER_DB}?mode=ro", uri=True, timeout=5)
-        rows = o.execute("SELECT path, library_path FROM files WHERE library_path IS NOT NULL AND library_path!=''").fetchall()
+        o = sqlite3.connect(ORGANIZER_DB, timeout=10)
+        files = o.execute("SELECT path, status, suggestion, library_status, library_path FROM files").fetchall()
+        try:
+            aliases = o.execute("SELECT title_norm, kind, tmdb_id FROM title_aliases").fetchall()
+        except sqlite3.Error:
+            aliases = []
         o.close()
-    except sqlite3.Error:
+    except sqlite3.Error as exc:
+        print("organizer db unreadable:", exc, flush=True)
         return 0
-    added = 0
-    c.execute("DELETE FROM aliases WHERE source='organizer'")
-    for src, lib in rows:
-        rel = lib.replace("/library/", "", 1)
-        parts = rel.split("/")
-        if len(parts) < 2:
+    c.execute("DELETE FROM org_files")
+    c.execute("DELETE FROM tmdb_aliases")
+    n = 0
+    for path, status, sug, lib_status, lib_path in files:
+        try:
+            d = json.loads(sug) if sug else {}
+        except ValueError:
+            d = {}
+        if not d.get("tmdb_id"):
             continue
-        kind = "movie" if parts[0] == "Movies" else "tv" if parts[0] == "TV Shows" else None
-        if not kind or not c.execute("SELECT 1 FROM titles WHERE key=?", (f"{kind}:{parts[1]}",)).fetchone():
-            continue
-        base = os.path.basename(os.path.dirname(src)) if os.path.dirname(src) != "/staging/aria2" else os.path.splitext(os.path.basename(src))[0]
-        for cand in {base, os.path.splitext(os.path.basename(src))[0]}:
-            t = re.split(r"[ ._]((?:19|20)\d{2}|[Ss]\d{1,2}[Ee]\d{1,3}|2160p|1080p|720p|480p)", cand, maxsplit=1)[0]
-            n = norm(re.sub(r"^\[[^\]]*\]", "", t))
-            if n:
-                c.execute("INSERT INTO aliases VALUES (?,?,?)", (f"{kind}:{parts[1]}", n, "organizer"))
-                added += 1
-    return added
+        c.execute("INSERT INTO org_files VALUES (?,?,?,?,?,?,?,?,?,?)",
+                  (os.path.basename(path), d.get("kind"), d.get("tmdb_id"), d.get("tvdb_id"), d.get("season"), d.get("episode"),
+                   d.get("title"), lib_path, status, lib_status))
+        if d.get("tvdb_id"):
+            c.execute("INSERT OR REPLACE INTO tmdb_tvdb VALUES (?,?)", (d["tmdb_id"], d["tvdb_id"]))
+        n += 1
+    for tn, kind, tid in aliases:
+        c.execute("INSERT OR REPLACE INTO tmdb_aliases VALUES (?,?,?)", (tn, kind, tid))
+    return n
 
 
 def scan(full=False):
@@ -223,7 +248,7 @@ def scan(full=False):
     for k in gone:
         for tbl in ("titles", "files", "aliases"):
             c.execute(f"DELETE FROM {tbl} WHERE key=?", (k,))
-    org = organizer_aliases(c)
+    org = sync_organizer(c)
     movies = c.execute("SELECT COUNT(*) FROM titles WHERE kind='movie'").fetchone()[0]
     shows = c.execute("SELECT COUNT(*) FROM titles WHERE kind='tv'").fetchone()[0]
     nfiles = c.execute("SELECT COUNT(*) FROM files").fetchone()[0]
@@ -235,7 +260,7 @@ def scan(full=False):
         os.chmod(DB_PATH, 0o644)
     except OSError:
         pass
-    print(f"scan done: {movies} movies, {shows} shows, {nfiles} files, {changed} folders re-read, {len(gone)} removed, {org} organizer aliases", flush=True)
+    print(f"scan done: {movies} movies, {shows} shows, {nfiles} files, {changed} folders re-read, {len(gone)} removed, {org} organizer files", flush=True)
 
 
 def main():
@@ -244,9 +269,20 @@ def main():
         return
     scan()
     last = time.time()
+
+    def org_stamp():
+        try:
+            return tuple(os.stat(ORGANIZER_DB + ext).st_mtime for ext in ("", "-wal") if os.path.exists(ORGANIZER_DB + ext))
+        except OSError:
+            return ()
+    seen = org_stamp()
     while True:
         time.sleep(5)
-        triggered = os.path.exists(TRIGGER)
+        stamp = org_stamp()
+        organizer_changed = stamp != seen
+        triggered = os.path.exists(TRIGGER) or (organizer_changed and time.time() - last > 15)
+        if organizer_changed and triggered:
+            seen = stamp
         if triggered or time.time() - last >= INTERVAL:
             if triggered:
                 try:

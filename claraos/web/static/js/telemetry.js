@@ -102,13 +102,6 @@ let currentDisksData = [];
             <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
             <span>App Store</span>
           </a>
-          <a href="#agents" onclick="switchTab('agents'); return false;" data-tab="agents" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
-            <div class="flex items-center gap-3">
-              <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
-              <span>Agent Studio</span>
-            </div>
-            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
-          </a>
           <a href="#settings" onclick="switchTab('settings'); return false;" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
             <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>
             <span>Cài đặt</span>
@@ -138,13 +131,6 @@ let currentDisksData = [];
           <a href="#store" onclick="switchTab('store'); return false;" data-tab="store" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-slate-800/80 transition">
             <i class="fa-solid fa-bag-shopping text-cyan-400 w-5 text-center"></i>
             <span>App Store</span>
-          </a>
-          <a href="#agents" onclick="switchTab('agents'); return false;" data-tab="agents" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition group">
-            <div class="flex items-center gap-3">
-              <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
-              <span>Agent Studio</span>
-            </div>
-            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
           </a>
           <a href="#settings" onclick="switchTab('settings'); return false;" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">
             <i class="fa-solid fa-sliders text-amber-400 w-5 text-center"></i>

@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0b0f19" />
+  <title>ClaraOS Flashcard — Đối Kháng 2 Người Chơi</title>
+  <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/duolingo.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(26, 34, 52, 0.8);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      /* Player 1 Theme: Cyan */
+      --p1: #06b6d4;
+      --p1-light: #38bdf8;
+      --p1-glow: rgba(6, 182, 212, 0.35);
+      --p1-bg: rgba(6, 182, 212, 0.12);
+
+      /* Player 2 Theme: Amber / Orange */
+      --p2: #f59e0b;
+      --p2-light: #fbbf24;
+      --p2-glow: rgba(245, 158, 11, 0.35);
+      --p2-bg: rgba(245, 158, 11, 0.12);
+
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.3);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.3);
+      --skip: #6366f1;
+      --skip-glow: rgba(99, 102, 241, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: radial-gradient(circle at 50% 15%, #18223c 0%, #0b0f19 80%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: max(12px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)) 14px;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand img {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+    }
+
+    .brand-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .actions-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.85rem;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Main Container */
+    .container {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+      max-height: 860px;
+    }
+
+    /* Scoreboard (2 Players) */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .player-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 10px 8px;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .player-card.p1 {
+      border-color: rgba(6, 182, 212, 0.25);
+    }
+
+    .player-card.p2 {
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+
+    .player-card.active.p1 {
+      border-color: var(--p1-light);
+      background: var(--p1-bg);
+      box-shadow: 0 0 20px var(--p1-glow);
+      transform: translateY(-2px);
+    }
+
+    .player-card.active.p2 {
+      border-color: var(--p2-light);
+      background: var(--p2-bg);
+      box-shadow: 0 0 20px var(--p2-glow);
+      transform: translateY(-2px);
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .player-card.active.p1 .player-header {
+      color: var(--p1-light);
+    }
+
+    .player-card.active.p2 .player-header {
+      color: var(--p2-light);
+    }
+
+    .player-score {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .player-card.p1 .player-score {
+      color: var(--p1-light);
+    }
+
+    .player-card.p2 .player-score {
+      color: var(--p2-light);
+    }
+
+    .player-turn-badge {
+      display: none;
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .player-card.active .player-turn-badge {
+      display: block;
+    }
+
+    .player-card.p1 .player-turn-badge {
+      background: var(--p1-light);
+      color: #042f2e;
+    }
+
+    .player-card.p2 .player-turn-badge {
+      background: var(--p2-light);
+      color: #451a03;
+    }
+
+    .vs-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 0 2px;
+    }
+
+    .vs-text {
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: #64748b;
+      letter-spacing: 0.05em;
+    }
+
+    .round-indicator {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Topic Selection Bar */
+    .topics-wrapper {
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .topics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+
+    .topics-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .topics-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .deck-stats {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .reset-pool-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 0.68rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .reset-pool-btn:hover {
+      color: #cbd5e1;
+    }
+
+    .topics-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .topics-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .topic-chip {
+      flex: 0 0 auto;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .topic-chip:active {
+      transform: scale(0.95);
+    }
+
+    .topic-chip.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Turn Banner with Explicit Roles */
+    .turn-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .turn-banner.turn-p1 {
+      background: var(--p1-bg);
+      border-color: rgba(6, 182, 212, 0.35);
+    }
+
+    .turn-banner.turn-p2 {
+      background: var(--p2-bg);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .role-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .turn-banner.turn-p1 .role-item.describer strong {
+      color: var(--p1-light);
+    }
+
+    .turn-banner.turn-p2 .role-item.describer strong {
+      color: var(--p2-light);
+    }
+
+    .rule-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 0.72rem;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .rule-pill strong {
+      color: #38bdf8;
+    }
+
+    .describe-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-top: 14px;
+      margin-bottom: 2px;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+    }
+
+    .role-divider {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 0.75rem;
+    }
+
+    /* Flashcard (Touch and Swipe Enabled) */
+    .card-scene {
+      perspective: 1000px;
+      margin-bottom: 10px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      min-height: 190px;
+      max-height: 280px;
+      background: linear-gradient(145deg, #1e293b 0%, #151e2e 100%);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 16px;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s ease-out;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      touch-action: pan-y;
+      will-change: transform;
+    }
+
+    .card.p1-turn {
+      border-color: rgba(6, 182, 212, 0.35);
+    }
+
+    .card.p2-turn {
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .card.flash-success {
+      animation: flash-green 0.28s ease;
+    }
+
+    .card.flash-danger {
+      animation: flash-red 0.28s ease;
+    }
+
+    .card.flash-skip {
+      animation: flash-purple 0.28s ease;
+    }
+
+    @keyframes flash-green {
+      0% { border-color: var(--success); box-shadow: 0 0 35px var(--success-glow); }
+      100% {}
+    }
+
+    @keyframes flash-red {
+      0% { border-color: var(--danger); box-shadow: 0 0 35px var(--danger-glow); }
+      100% {}
+    }
+
+    @keyframes flash-purple {
+      0% { border-color: var(--skip); box-shadow: 0 0 35px var(--skip-glow); }
+      100% {}
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-topic-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 3px 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .word {
+      font-size: clamp(1.7rem, 5.5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin: 10px 0;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      word-break: break-word;
+      padding: 0 10px;
+    }
+
+    .hint-container {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .hint {
+      font-size: 0.88rem;
+      line-height: 1.35;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 8px 12px;
+      display: none;
+      animation: fadeIn 0.15s ease-out;
+      max-width: 95%;
+    }
+
+    .hint-prompt {
+      font-size: 0.72rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Swipe hint guide for mobile */
+    .swipe-indicator {
+      font-size: 0.68rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 6px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .swipe-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Friendly Large Buttons */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    button.btn {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 52px;
+    }
+
+    button.btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-wrong {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #fff;
+      box-shadow: 0 6px 18px -4px var(--danger-glow);
+    }
+
+    .btn-correct {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      box-shadow: 0 6px 18px -4px var(--success-glow);
+    }
+
+    /* Dedicated Skip Word Button */
+    .btn-skip-word {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      box-shadow: 0 6px 18px -4px var(--skip-glow);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      min-height: 48px;
+    }
+
+    .skip-desc {
+      font-size: 0.72rem;
+      opacity: 0.85;
+      font-weight: 500;
+      margin-left: 2px;
+    }
+
+    .bottom-bar {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-subtle {
+      flex: 1;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+    }
+
+    .btn-subtle:active {
+      background: rgba(255, 255, 255, 0.12);
+      transform: scale(0.96);
+    }
+
+    /* Modal End Game / Winner */
+    .winner-modal {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(11, 15, 25, 0.97);
+      border-radius: 24px;
+      backdrop-filter: blur(14px);
+      z-index: 50;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: modalFadeIn 0.25s ease-out;
+      overflow-y: auto;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .winner-trophy {
+      font-size: 3rem;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.5));
+    }
+
+    .winner-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .winner-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .final-score-box {
+      display: flex;
+      gap: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 10px 24px;
+      margin-bottom: 14px;
+    }
+
+    .final-player {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .final-player-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .final-player-score {
+      font-size: 1.75rem;
+      font-weight: 800;
+    }
+
+    /* Round Stats Breakdown */
+    .stats-breakdown {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      font-size: 0.72rem;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .stat-val {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    /* Desktop Keyboard Shortcuts (Hidden on small mobile) */
+    .kbd-hint {
+      margin-top: 10px;
+      font-size: 0.68rem;
+      color: #64748b;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      .kbd-hint {
+        display: none;
+      }
+      .container {
+        border-radius: 20px;
+        padding: 14px;
+      }
+    }
+
+    kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.65rem;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <a href="/" class="brand" title="Quay lại ClaraOS">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/duolingo.png" alt="Flashcard Logo" />
+      <div>
+        <span class="brand-title">English Flashcard</span>
+        <span class="brand-sub">ClaraOS 2-Player Arena</span>
+      </div>
+    </a>
+    <div class="actions-bar">
+      <button class="icon-btn" id="btn-sound" onclick="toggleSound()" title="Bật/Tắt âm thanh">
+        <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+      </button>
+      <button class="icon-btn" onclick="toggleFullscreen()" title="Toàn màn hình">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- 2-Player Scoreboard -->
+    <div class="scoreboard">
+      <!-- Player 1 -->
+      <div class="player-card active p1" id="card-p1" onclick="promptPlayerName(1)">
+        <div class="player-header">
+          <i class="fa-solid fa-user-astronaut"></i>
+          <span id="name-p1">Player 1</span>
+          <i class="fa-solid fa-pen text-[9px] opacity-40"></i>
+        </div>
+        <div class="player-score" id="score-p1">0</div>
+        <span class="player-turn-badge">Đến lượt</span>
+      </div>
+
+      <!-- VS / Turn Counter -->
+      <div class="vs-badge">
+        <span class="vs-text">VS</span>
+        <span class="round-indicator" id="turn-count">Từ #1</span>
+      </div>
+
+      <!-- Player 2 -->
+      <div class="player-card p2" id="card-p2" onclick="promptPlayerName(2)">
+        <div class="player-header">
+          <i class="fa-solid fa-user-ninja"></i>
+          <span id="name-p2">Player 2</span>
+          <i class="fa-solid fa-pen text-[9px] opacity-40"></i>
+        </div>
+        <div class="player-score" id="score-p2">0</div>
+        <span class="player-turn-badge">Đến lượt</span>
+      </div>
+    </div>
+
+    <!-- Topic Selection Bar -->
+    <div class="topics-wrapper">
+      <div class="topics-header">
+        <span class="topics-title"><i class="fa-solid fa-layer-group"></i> Chủ đề:</span>
+        <div class="topics-actions">
+          <span class="deck-stats" id="deck-stats">Còn: 0 từ</span>
+          <button class="reset-pool-btn" onclick="resetPlayedHistory()" title="Đặt lại để chơi lại các từ cũ đã học">
+            <i class="fa-solid fa-arrows-rotate"></i> Reset từ
+          </button>
+        </div>
+      </div>
+      <div class="topics-bar" id="topics-bar">
+        <!-- Rendered dynamically by JS -->
+      </div>
+    </div>
+
+    <!-- Active Turn Notification Banner (Explicit Describer & Guesser) -->
+    <div class="turn-banner turn-p1" id="turn-banner">
+      <div class="role-item describer">
+        <i class="fa-solid fa-microphone-lines"></i>
+        <span>Gợi ý: <strong id="describer-label">Player 1</strong></span>
+      </div>
+      <span class="role-divider">•</span>
+      <div class="role-item">
+        <i class="fa-solid fa-ear-listen"></i>
+        <span>Đoán: <strong id="guesser-label">Player 2</strong></span>
+      </div>
+    </div>
+
+    <!-- Rule Badge -->
+    <div class="rule-pill">
+      <i class="fa-solid fa-language text-sky-400"></i>
+      <span>Từ tiếng Việt hoặc Anh • <strong>Diễn tả 100% bằng Tiếng Anh!</strong></span>
+    </div>
+
+    <!-- Card Area with Swipe Gestures -->
+    <div class="card-scene">
+      <div class="card p1-turn" id="card">
+        <span class="card-topic-tag" id="card-topic-tag"><i class="fa-solid fa-tag"></i> <span id="topic-tag-label">Đời sống</span></span>
+        <span class="card-badge" id="card-badge"><i class="fa-regular fa-lightbulb"></i> Chạm để xem gợi ý</span>
+        <div class="describe-badge"><i class="fa-solid fa-bullhorn"></i> Explain in English</div>
+        <p class="word" id="word">Loading...</p>
+        <div class="hint-container">
+          <p class="hint" id="hint">Gợi ý từ vựng</p>
+          <span class="hint-prompt" id="hint-prompt"><i class="fa-solid fa-hand-pointer"></i> Chạm thẻ mở gợi ý</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Swipe Helper Indicator -->
+    <div class="swipe-indicator">
+      <span class="swipe-badge" style="color: var(--danger);"><i class="fa-solid fa-arrow-left"></i> Vuốt trái: Sai</span>
+      <span class="swipe-badge" style="color: var(--skip);"><i class="fa-solid fa-arrow-up"></i> Vuốt lên: Skip</span>
+      <span class="swipe-badge" style="color: var(--success);">Vuốt phải: Đúng <i class="fa-solid fa-arrow-right"></i></span>
+    </div>
+
+    <!-- Controls (3 Actions: Sai, Đúng & Skip Word) -->
+    <div class="controls">
+      <!-- Đoán sai -->
+      <button class="btn btn-wrong" onclick="handleAnswer(false)" title="Người đoán đoán sai từ này (0 điểm)">
+        <i class="fa-solid fa-xmark"></i>
+        <span>Đoán Sai (0đ)</span>
+      </button>
+
+      <!-- Đoán đúng -->
+      <button class="btn btn-correct" onclick="handleAnswer(true)" title="Người đoán đoán đúng từ này (+1 điểm)">
+        <i class="fa-solid fa-check"></i>
+        <span>Đúng (+1đ)</span>
+      </button>
+
+      <!-- Skip Word khi không biết diễn tả -->
+      <button class="btn btn-skip-word" onclick="handleSkip()" title="Người gợi ý không biết diễn tả từ này (0 điểm, chuyển lượt)">
+        <i class="fa-solid fa-forward-step"></i>
+        <span>Skip từ này <span class="skip-desc">(Khó diễn tả • 0đ)</span></span>
+      </button>
+    </div>
+
+    <!-- Action sub-buttons -->
+    <div class="bottom-bar">
+      <button class="btn-subtle" onclick="resetGame()">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>Làm mới ván</span>
+      </button>
+      <button class="btn-subtle" onclick="showWinnerModal()">
+        <i class="fa-solid fa-trophy"></i>
+        <span>Trao giải</span>
+      </button>
+    </div>
+
+    <!-- Keyboard Shortcuts (Desktop) -->
+    <div class="kbd-hint">
+      <span><kbd>A</kbd> / <kbd>←</kbd> Sai</span>
+      <span><kbd>S</kbd> / <kbd>↓</kbd> Skip</span>
+      <span><kbd>D</kbd> / <kbd>→</kbd> Đúng</span>
+      <span><kbd>Space</kbd> Gợi ý</span>
+    </div>
+
+    <!-- Winner / Summary Modal -->
+    <div class="winner-modal" id="winner-modal">
+      <div class="winner-trophy" id="modal-trophy">🏆</div>
+      <h2 class="winner-title" id="modal-winner-name">Player 1 Chiến Thắng!</h2>
+      <p class="winner-sub" id="modal-sub">Trận đấu đối kháng kịch tính đã kết thúc</p>
+
+      <div class="final-score-box">
+        <div class="final-player">
+          <span class="final-player-name" id="modal-p1-name">Player 1</span>
+          <span class="final-player-score" style="color: var(--p1-light);" id="modal-p1-score">0</span>
+        </div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #475569; align-self: center;">:</div>
+        <div class="final-player">
+          <span class="final-player-name" id="modal-p2-name">Player 2</span>
+          <span class="final-player-score" style="color: var(--p2-light);" id="modal-p2-score">0</span>
+        </div>
+      </div>
+
+      <!-- Stats Breakdown -->
+      <div class="stats-breakdown">
+        <div class="stat-box">
+          <span style="color: var(--success);" class="stat-val" id="stat-correct">0</span>
+          <span style="color: var(--text-muted);">Đoán đúng</span>
+        </div>
+        <div class="stat-box">
+          <span style="color: var(--danger);" class="stat-val" id="stat-wrong">0</span>
+          <span style="color: var(--text-muted);">Đoán sai</span>
+        </div>
+        <div class="stat-box">
+          <span style="color: var(--skip);" class="stat-val" id="stat-skipped">0</span>
+          <span style="color: var(--text-muted);">Bỏ qua (Skip)</span>
+        </div>
+      </div>
+
+      <button class="btn btn-correct" style="width: 100%; max-width: 240px;" onclick="closeWinnerModalAndRestart()">
+        <i class="fa-solid fa-play"></i>
+        <span>Chơi ván mới</span>
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // Rich Curated Thematic Vocabulary Database (Vietnamese & International)
+    // Rule: Words can be Vietnamese or English, but Describers MUST explain in English!
+    const TOPICS = {
+      all: {
+        id: "all",
+        name: "Tất cả chủ đề",
+        icon: "fa-shuffle"
+      },
+      vn_life: {
+        id: "vn_life",
+        name: "🇻🇳 Đời sống & Văn hóa VN",
+        icon: "fa-street-view",
+        words: [
+          { word: "Áo dài", hint: "Traditional Vietnamese national garment featuring a long split silk tunic worn over flowing trousers" },
+          { word: "Nón lá", hint: "Iconic conical hat handwoven from dried palm leaves used to shield against sun and tropical rain" },
+          { word: "Xe ôm", hint: "Traditional motorbike taxi driver waiting on street corners to ferry passengers through city traffic" },
+          { word: "Kẹt xe", hint: "Chaotic rush-hour traffic jam where thousands of motorbikes pack roads and sidewalks bumper-to-bumper" },
+          { word: "Trà đá vỉa hè", hint: "Chilled unsweetened iced green tea served in plastic cups on miniature blue stools at street corners" },
+          { word: "Đi bão", hint: "Spontaneous massive street parade celebrating national football wins with flags, horns, and motorbikes" },
+          { word: "Hát karaoke", hint: "Favorite weekend social bonding pastime where friends sing along to lyrics inside private party rooms" },
+          { word: "Bao lì xì", hint: "Red paper envelope stuffed with crisp lucky money handed to children and grandparents on Lunar New Year" },
+          { word: "Chợ nổi", hint: "Vibrant floating river market in the Mekong Delta where traders buy and sell fruit from wooden boats" },
+          { word: "Cúp điện", hint: "Sudden power blackout during scorching summer days when air conditioners and electric fans stop running" },
+          { word: "Cầu Rồng", hint: "Massive golden dragon-shaped bridge in Da Nang that breathes actual fire and blasts water on weekend nights" },
+          { word: "Chợ Bến Thành", hint: "Historic landmark market in Central Saigon recognized by its iconic four-faced clock tower entrance" },
+          { word: "Hồ Gươm", hint: "Historical lake in the heart of Hanoi linked to King Le Loi returning a magical sword to a Golden Turtle" },
+          { word: "Chạy deadline", hint: "Working intensely past midnight in a panic to finish work or university assignments before the timer runs out" },
+          { word: "Nhậu vỉa hè", hint: "Lively roadside drinking gathering where people drink cold beer, eat grilled snacks, and shout '1 2 3 Dzô!'" },
+          { word: "Giao thừa", hint: "Sacred New Year's Eve stroke of midnight marking the cosmic transition into the Lunar New Year" },
+          { word: "Thả cá chép", hint: "Lunar ritual on the 23rd of the 12th month releasing golden carps to transport Kitchen Gods to Heaven" },
+          { word: "Mâm ngũ quả", hint: "Tết altar fruit platter composed of five colorful fruits expressing prayers for prosperity and health" },
+          { word: "Tết Trung Thu", hint: "Mid-Autumn Moon Festival where children parade carrying illuminated star lanterns and eat sweet mooncakes" },
+          { word: "Múa lân", hint: "Acrobatic traditional lion dance performed with loud rhythmic drums and cymbals to chase away bad luck" },
+          { word: "Vịnh Hạ Long", hint: "UNESCO World Natural Heritage bay in Quang Ninh boasting thousands of towering emerald karst pillars" },
+          { word: "Phố cổ Hội An", hint: "Preserved ancient trading port famous for mossy yellow shophouses and glowing nocturnal silk lanterns" },
+          { word: "Táo Quân", hint: "Kitchen Gods who govern family hearths and report annual household deeds to the Jade Emperor" },
+          { word: "Hoa đào & Hoa mai", hint: "Pink peach blossoms in the North and golden apricot blossoms in the South signaling spring arrival" }
+        ]
+      },
+      vn_food: {
+        id: "vn_food",
+        name: "🍲 Ẩm thực Việt Nam",
+        icon: "fa-bowl-rice",
+        words: [
+          { word: "Bánh mì", hint: "Crispy airy Vietnamese baguette filled with pork liver pâté, pickled daikon, cucumber, cilantro, and chili" },
+          { word: "Phở bò", hint: "World-renowned noodle soup brewed with cinnamon, star anise, charred ginger, beef bones, and fresh herbs" },
+          { word: "Cà phê sữa đá", hint: "Intense dark robusta drip coffee sweetened with creamy condensed milk poured over crushed ice cubes" },
+          { word: "Bún chả", hint: "Hanoi specialty of smoky grilled pork patties and pork belly in warm sweet-savory fish sauce with rice noodles" },
+          { word: "Bánh xèo", hint: "Crisp turmeric-yellow sizzling crepe stuffed with shrimp, pork slices, and bean sprouts, wrapped in greens" },
+          { word: "Gỏi cuốn", hint: "Translucent fresh summer rolls wrapping shrimp, pork, rice vermicelli, and mint dipped in peanut hoisin sauce" },
+          { word: "Cơm tấm", hint: "Saigon broken rice plate served with marinated grilled pork chop, steamed egg meatloaf, and scallion oil" },
+          { word: "Bún bò Huế", hint: "Spicy lemongrass-infused central noodle soup with rich red broth, beef shank, and pork knuckle" },
+          { word: "Bánh chưng", hint: "Square sticky rice cake wrapped in dong leaves with mung beans and fatty pork, boiled overnight for Tết" },
+          { word: "Bún đậu mắm tôm", hint: "Platter of rice vermicelli cubes, fried golden tofu, and pork sausage dipped into pungent fermented shrimp paste" },
+          { word: "Mắm tôm", hint: "Purple-hued, strongly fermented shrimp dipping condiment mixed vigorously with kumquat juice and fresh chili" },
+          { word: "Trứng vịt lộn", hint: "Fertilized duck embryo boiled in its shell, savored with spicy laksa leaves (rau răm), black pepper, and lime" },
+          { word: "Chả giò (Nem rán)", hint: "Crispy fried spring rolls packed with minced pork, wood ear mushrooms, cellophane noodles, and carrots" },
+          { word: "Bánh cuốn", hint: "Steamed delicate paper-thin rice sheets rolled around minced pork and wood ear mushrooms, topped with fried shallots" },
+          { word: "Cà phê trứng", hint: "Hanoi dessert coffee concoction topped with a decadent whipped froth of egg yolk, sugar, and condensed milk" },
+          { word: "Chè ba màu", hint: "Refreshing three-color sweet dessert cup featuring red kidney beans, yellow mung bean, pandan jelly, and coconut milk" },
+          { word: "Hủ tiếu", hint: "Savory pork-bone noodle broth originating from Southern Vietnam and Cambodia, topped with minced pork and quail eggs" },
+          { word: "Sầu riêng", hint: "Thorny tropical fruit known as the King of Fruits with custardy, intensely fragrant golden-yellow flesh" },
+          { word: "Nước mắm", hint: "Essential amber liquid seasoning crafted by fermenting anchovies with sea salt in wooden vats for up to a year" },
+          { word: "Cà phê vợt", hint: "Nostalgic street brewing technique using fabric cloth strainers and charcoal clay kettles in ancient Saigon alleys" }
+        ]
+      },
+      vn_media: {
+        id: "vn_media",
+        name: "🎬 Phim & Show Việt Nam",
+        icon: "fa-clapperboard",
+        words: [
+          { word: "Táo Quân (Gặp Nhau Cuối Năm)", hint: "Beloved annual New Year's Eve television satire reviewing national controversies before the Jade Emperor" },
+          { word: "Mắt Biếc", hint: "Victor Vu's romantic tragedy based on Nguyen Nhat Anh's novel depicting Ngan's lifelong bittersweet devotion to Ha Lan" },
+          { word: "Bố Già (The Godfather VN)", hint: "Tran Thanh's record-breaking drama exploring generational sacrifice and misunderstandings of a poor Saigon father" },
+          { word: "Nhà Bà Nữ", hint: "Blockbuster family melodrama detailing suffocating matriarchal control and generational conflicts in a crab soup shop" },
+          { word: "Lật Mặt", hint: "Action-packed thriller cinematic franchise created, written, and directed by Ly Hai spanning numerous sequels" },
+          { word: "Đất Rừng Phương Nam", hint: "Period adventure chronicling young boy An journeying across the Southern delta swamps to seek his father" },
+          { word: "Em Chưa 18", hint: "Hit teen romantic comedy where a sassy high school girl blackmails an arrogant yoga trainer into a fake relationship" },
+          { word: "Người Phán Xử", hint: "Gripping crime television drama centered on Phan Quan, an underworld syndicate godfather and impartial arbiter" },
+          { word: "Về Nhà Đi Con", hint: "Touching television family drama revolving around a widowed father tenderly raising three headstrong daughters" },
+          { word: "Rap Việt", hint: "Phenomenal reality talent television contest that propelled underground hip-hop into mainstream Vietnamese culture" },
+          { word: "2 Ngày 1 Đêm", hint: "Popular outdoor reality travel variety show where six celebrity hosts take on humorous rural challenges across Vietnam" },
+          { word: "Sao Nhập Ngũ", hint: "Celebrity military reality series where artists enlist in real armed force regiments for grueling boot camp drills" },
+          { word: "Ai Là Triệu Phú", hint: "Vietnamese license of 'Who Wants to Be a Millionaire' famously hosted for many years by journalist Lai Van Sam" },
+          { word: "Cánh Đồng Bất Tận", hint: "Acclaimed film adaptation of Nguyen Ngoc Tu's story illustrating the painful nomadic duck-herding lives in the Southwest" },
+          { word: "Gặp Nhau Cuối Tuần", hint: "Pioneering weekend comedy variety broadcast that launched the careers of iconic Northern comedians" }
+        ]
+      },
+      vn_lit: {
+        id: "vn_lit",
+        name: "📚 Văn học Việt Nam",
+        icon: "fa-book-bookmark",
+        words: [
+          { word: "Truyện Kiều", hint: "Nguyen Du's monumental 3,254-line verse epic recounting the tragic fifteen-year wandering ordeal of Thuy Kieu" },
+          { word: "Dế Mèn Phiêu Lưu Ký", hint: "To Hoai's beloved classic adventure novel chronicling a cocky young cricket who matures through life lessons on the road" },
+          { word: "Số Đỏ", hint: "Vu Trong Phung's biting social satire tracing the absurd social ascent of street urchin Xuan Toc Do in colonial society" },
+          { word: "Vợ Nhặt", hint: "Kim Lan's moving realist story where starving laborer Trang brings home an impoverished woman as his wife during the 1945 famine" },
+          { word: "Chí Phèo", hint: "Nam Cao's tragic masterpiece of a kind peasant transformed into a scarred, alcoholic henchman who begs to be a good human" },
+          { word: "Tắt Đèn", hint: "Ngo Tat To's harsh realist novel spotlighting Chi Dau's desperate fight to pay unjust colonial head taxes for her husband" },
+          { word: "Lão Hạc", hint: "Nam Cao's heartbreaking tale of an impoverished old farmer who poisons his loyal dog Vang before taking his own life to protect his son's land" },
+          { word: "Chiếc Thuyền Ngoài Xa", hint: "Nguyen Minh Chau's philosophical story about a photographer discovering domestic abuse behind a poetic misty seascape" },
+          { word: "Lặng Lẽ Sa Pa", hint: "Nguyen Thanh Long's story honoring a lonely 27-year-old meteorologist doing quiet scientific measurements on Yen Son mountain" },
+          { word: "Hồn Trương Ba Da Hàng Thịt", hint: "Luu Quang Vu's philosophical drama about an old chess master's gentle soul trapped inside the vulgar body of a butcher" },
+          { word: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh", hint: "Nguyen Nhat Anh's nostalgic novel portraying childhood innocence, brotherhood, and first puppy love in a rural village" },
+          { word: "Lục Vân Tiên", hint: "Nguyen Dinh Chieu's southern epic poem celebrating chivalry, filial piety, and heroism in rescuing Kieu Nguyet Nga" }
+        ]
+      },
+      movies: {
+        id: "movies",
+        name: "🎬 Phim điện ảnh TG",
+        icon: "fa-film",
+        words: [
+          { word: "Titanic", hint: "Massive luxury passenger ship that struck an iceberg on its maiden voyage with Jack & Rose" },
+          { word: "Avatar", hint: "Sci-fi epic on the alien moon Pandora featuring tall blue-skinned Na'vi warriors" },
+          { word: "Inception", hint: "Dream thieves entering subconscious minds with spinning tops and layered realities" },
+          { word: "Interstellar", hint: "Astronauts traversing a wormhole near Saturn searching for a new habitable planet for humanity" },
+          { word: "The Matrix", hint: "Keanu Reeves discovering humanity is trapped in a simulated reality choosing between blue & red pill" },
+          { word: "Jurassic Park", hint: "Theme park island where cloned prehistoric dinosaurs escape their containment fences" },
+          { word: "The Dark Knight", hint: "Christian Bale as Batman battling Heath Ledger's psychopathic Joker in Gotham City" },
+          { word: "Harry Potter", hint: "Boy wizard with a lightning scar attending Hogwarts School of Witchcraft and Wizardry" },
+          { word: "The Lord of the Rings", hint: "Hobbit Frodo trekking across Middle-earth to destroy the One Ring in Mount Doom" },
+          { word: "Gladiator", hint: "Betrayed Roman general Maximus fighting in the Colosseum for vengeance against Commodus" },
+          { word: "Oppenheimer", hint: "Theoretical physicist leading the Manhattan Project to develop the atomic bomb" },
+          { word: "Parasite", hint: "Clever poor family gradually infiltrating a wealthy Seoul household with darkly comedic results" },
+          { word: "La La Land", hint: "Musical romance in Los Angeles between an aspiring jazz pianist and a struggling actress" },
+          { word: "The Lion King", hint: "Young lion prince Simba overcoming grief after Mufasa's death to reclaim Pride Rock" },
+          { word: "Finding Nemo", hint: "Anxious clownfish father crossing the Great Barrier Reef to rescue his captured son in Sydney" },
+          { word: "Spider-Man", hint: "High school student Peter Parker bitten by a radioactive spider fighting crime" },
+          { word: "Toy Story", hint: "Secret lives of sentient toys led by cowboy Woody and space ranger Buzz Lightyear" },
+          { word: "Barbie", hint: "Stereotypical doll suffering an existential crisis and traveling to the real human world" },
+          { word: "Star Wars", hint: "Jedi knights wielding lightsabers and harnessing the Force against Darth Vader's Galactic Empire" },
+          { word: "Coco", hint: "Young Mexican boy transported into the vibrant Land of the Dead on Día de los Muertos" },
+          { word: "Forrest Gump", hint: "Kind-hearted Alabama man running across America with his famous box of chocolates quote" },
+          { word: "The Shawshank Redemption", hint: "Wrongly convicted banker Andy Dufresne plotting a patient 19-year tunnel escape" }
+        ]
+      },
+      shows: {
+        id: "shows",
+        name: "📺 TV Shows & Series",
+        icon: "fa-tv",
+        words: [
+          { word: "Breaking Bad", hint: "High school chemistry teacher Walter White cooking blue crystal meth with Jesse Pinkman" },
+          { word: "Game of Thrones", hint: "Noble dynasties fighting brutal wars for the Iron Throne of Westeros with dragons & White Walkers" },
+          { word: "Stranger Things", hint: "Kids on bicycles in 1980s Indiana fighting monsters from the Upside Down with Eleven" },
+          { word: "Friends", hint: "Six young adults hanging out at the Central Perk coffee couch in Manhattan" },
+          { word: "Sherlock", hint: "Modern Benedict Cumberbatch solving impossible murders at 221B Baker Street with Dr. Watson" },
+          { word: "Squid Game", hint: "Desperate debtors playing deadly traditional Korean children's games for 45.6 billion won" },
+          { word: "The Office", hint: "Mockumentary sitcom chronicling Dunder Mifflin paper company employees led by Michael Scott" },
+          { word: "Wednesday", hint: "Gothic Addams Family daughter investigating supernatural killings at Nevermore Academy" },
+          { word: "Peaky Blinders", hint: "Notorious Birmingham street gang with razor blades stitched into the peaks of their flat caps" },
+          { word: "Black Mirror", hint: "Dystopian anthology exploring the dark, unforeseen consequences of future technological innovations" },
+          { word: "Better Call Saul", hint: "Slick criminal defense attorney Jimmy McGill transforming into morally flexible Saul Goodman" },
+          { word: "Money Heist", hint: "Red jumpsuits and Salvador Dalí masks staging a multi-day heist on the Royal Mint of Spain" },
+          { word: "Chernobyl", hint: "Dramatic retelling of the devastating 1986 nuclear power plant catastrophe in Soviet Ukraine" },
+          { word: "The Crown", hint: "Biographical royal drama following the historical reign of Queen Elizabeth II" },
+          { word: "Narcos", hint: "DEA agents hunting down Colombian cartel kingpin Pablo Escobar and the Medellín empire" }
+        ]
+      },
+      books: {
+        id: "books",
+        name: "📖 Danh tác Thế giới",
+        icon: "fa-book-open",
+        words: [
+          { word: "The Great Gatsby", hint: "F. Scott Fitzgerald novel about mysterious millionaire Jay Gatsby throwing opulent 1920s parties" },
+          { word: "1984", hint: "George Orwell dystopian novel depicting a totalitarian surveillance state ruled by Big Brother" },
+          { word: "To Kill a Mockingbird", hint: "Harper Lee classic where southern lawyer Atticus Finch defends a falsely accused Black man" },
+          { word: "The Little Prince", hint: "Antoine de Saint-Exupéry novella about a young prince visiting asteroids from his tiny planet with a rose" },
+          { word: "The Alchemist", hint: "Paulo Coelho philosophical journey of Andalusian shepherd Santiago seeking treasure in Egypt" },
+          { word: "Pride and Prejudice", hint: "Jane Austen romantic masterpiece revolving around Elizabeth Bennet and wealthy Mr. Darcy" },
+          { word: "Romeo and Juliet", hint: "Shakespearean tragedy of two star-crossed teenage lovers from feuding families in Verona" },
+          { word: "Frankenstein", hint: "Mary Shelley gothic tale of a scientist creating life from corpse parts only to abandon his creature" },
+          { word: "Dracula", hint: "Bram Stoker novel introducing the aristocratic vampire count haunting an ancient Transylvanian castle" },
+          { word: "Don Quixote", hint: "Miguel de Cervantes novel about an eccentric knight riding a horse and charging at windmills" },
+          { word: "The Da Vinci Code", hint: "Dan Brown thriller with symbologist Robert Langdon unraveling a conspiracy hidden in art" },
+          { word: "The Hobbit", hint: "J.R.R. Tolkien prelude adventure where Bilbo Baggins accompanies dwarves to reclaim the Lonely Mountain" },
+          { word: "Animal Farm", hint: "Political fable where barnyard farm animals rebel against their human farmer under pig rule" },
+          { word: "Les Misérables", hint: "Victor Hugo epic following paroled prisoner Jean Valjean pursued by relentless Inspector Javert" },
+          { word: "Crime and Punishment", hint: "Dostoevsky psychological thriller of impoverished student Raskolnikov committing a pawnbroker murder" }
+        ]
+      },
+      anime: {
+        id: "anime",
+        name: "🎌 Anime & Hoạt hình",
+        icon: "fa-dragon",
+        words: [
+          { word: "Spirited Away", hint: "Studio Ghibli masterpiece where young Chihiro wanders into an enchanted bathhouse for spirits" },
+          { word: "One Piece", hint: "Monkey D. Luffy and his Straw Hat pirate crew sailing the Grand Line in search of the legendary pirate treasure" },
+          { word: "Naruto", hint: "Orphaned ninja with a Nine-Tailed Fox spirit sealed inside dreaming of becoming the Village Hokage" },
+          { word: "Attack on Titan", hint: "Humanity barricaded behind massive concentric walls defending against man-eating giants" },
+          { word: "Dragon Ball", hint: "Saiyan warrior Goku collecting mystical glowing orbs that summon a wish-granting dragon" },
+          { word: "Demon Slayer", hint: "Tanjiro Kamado mastering Water Breathing swordsmanship to cure his demonized sister Nezuko" },
+          { word: "Death Note", hint: "Genius high schooler Light Yagami using a supernatural notebook that kills anyone whose name is written" },
+          { word: "Detective Conan", hint: "High school detective poisoned with an experimental drug that shrinks him into an elementary boy" },
+          { word: "My Neighbor Totoro", hint: "Two young sisters befriending a giant cuddly forest spirit that flies in a cat-shaped bus" },
+          { word: "Your Name", hint: "Body-swapping anime romance between a Tokyo boy and rural girl connected across celestial comets" },
+          { word: "Jujutsu Kaisen", hint: "Yuji Itadori swallowing a cursed finger of the King of Curses Sukuna and attending sorcerer school" },
+          { word: "Pokemon", hint: "Ash Ketchum and his electric partner Pikachu traveling regions catching pocket monsters in balls" }
+        ]
+      },
+      daily: {
+        id: "daily",
+        name: "☕ Đời sống hàng ngày",
+        icon: "fa-house",
+        words: [
+          { word: "Subway", hint: "Underground rapid train system in busy cities" },
+          { word: "Backpack", hint: "A sturdy bag with two shoulder straps for school or travel" },
+          { word: "Umbrella", hint: "Folding canopy protecting you from sudden rainfall or sunlight" },
+          { word: "Scissors", hint: "Instrument with two sharp blades used for cutting paper or fabric" },
+          { word: "Alarm Clock", hint: "Device set beside your bed that rings to wake you up in the morning" },
+          { word: "Mirror", hint: "Reflective glass surface you glance at to check your outfit" },
+          { word: "Pillow", hint: "Soft rectangular cushion resting under your head while sleeping" },
+          { word: "Toothpaste", hint: "Minty paste squeezed onto a brush to clean teeth" },
+          { word: "Candle", hint: "Wax block with an ignitable wick giving gentle flame and scent" },
+          { word: "Whistle", hint: "Small metal or plastic device blown to produce a high sharp tone" },
+          { word: "Luggage", hint: "Suitcases packed with clothes when going on a trip" },
+          { word: "Vacuum Cleaner", hint: "Electrical appliance sucking dust and debris from floors" },
+          { word: "Slippers", hint: "Comfortable soft footwear worn indoors inside the house" },
+          { word: "Keychain", hint: "Small ring holding all your door, bike, and locker keys together" },
+          { word: "Balcony", hint: "Elevated outdoor platform extending from an upper-floor apartment" },
+          { word: "Blanket", hint: "Thick woven woolen cloth keeping you warm in chilly nights" },
+          { word: "Shoelace", hint: "Cords or strings passed through eyelets to tighten sneakers" },
+          { word: "Doormat", hint: "Rough mat placed outside entrances to wipe muddy shoes" },
+          { word: "Thermos", hint: "Insulated container keeping your coffee or soup steaming hot" },
+          { word: "Hanger", hint: "Shaped piece of wood or plastic inside a wardrobe to hang coats" },
+          { word: "Wallet", hint: "Pocket-sized flat folding case storing cash, ID, and bank cards" },
+          { word: "Headphones", hint: "Pair of padded audio speakers worn over ears for private music" },
+          { word: "Flashlight", hint: "Handheld portable electric lamp illuminating dark corners" },
+          { word: "Sunglasses", hint: "Tinted glasses shielding sensitive eyes from harsh UV glare" },
+          { word: "Bicycle", hint: "Two-wheeled pedal-driven vehicle great for urban commuting" }
+        ]
+      },
+      work: {
+        id: "work",
+        name: "💼 Công sở & Sự nghiệp",
+        icon: "fa-briefcase",
+        words: [
+          { word: "Deadline", hint: "The strict date or time before which a project must be submitted" },
+          { word: "Brainstorm", hint: "Spontaneous group discussion generating creative ideas and solutions" },
+          { word: "Promotion", hint: "Advancement in career rank accompanied by higher salary and perks" },
+          { word: "Resume / CV", hint: "Document summarizing work experience, qualifications, and skills" },
+          { word: "Interview", hint: "Formal question-and-answer meeting between employer and candidate" },
+          { word: "Salary", hint: "Regular fixed monthly financial compensation paid to employees" },
+          { word: "Contract", hint: "Legally binding formal agreement signed between two parties" },
+          { word: "Overtime", hint: "Extra hours worked beyond standard scheduled working shifts" },
+          { word: "Colleague", hint: "Co-worker collaborating with you in the same office or department" },
+          { word: "Whiteboard", hint: "Glossy white surface written on with erasable dry-wipe markers" },
+          { word: "Presentation", hint: "Structured speech sharing pitch slides with clients or directors" },
+          { word: "Spreadsheet", hint: "Software grid of rows and columns used to analyze numerical tables" },
+          { word: "Freelancer", hint: "Self-employed professional providing services to multiple clients" },
+          { word: "Internship", hint: "Temporary training position offered to students or graduates" },
+          { word: "Networking", hint: "Interacting with peers in the same industry to cultivate opportunities" },
+          { word: "Stapler", hint: "Desktop device punching small metal clips through paper sheets" },
+          { word: "Quarterly Review", hint: "Performance evaluation session conducted every three months" },
+          { word: "Briefcase", hint: "Narrow rectangular leather case designed for documents and laptops" },
+          { word: "Resignation", hint: "Official act or letter declaring intent to quit employment" },
+          { word: "Bonus", hint: "Additional reward money given for exceptional performance" }
+        ]
+      },
+      tech: {
+        id: "tech",
+        name: "💻 Công nghệ & Khoa học",
+        icon: "fa-laptop-code",
+        words: [
+          { word: "Algorithm", hint: "Step-by-step mathematical recipe followed by computer programs" },
+          { word: "Artificial Intelligence", hint: "Simulation of human cognition, reasoning, and learning in machines" },
+          { word: "Cybersecurity", hint: "Techniques and software defending servers from hacker infiltrations" },
+          { word: "Cloud Computing", hint: "Delivery of on-demand servers, storage, and databases over the Internet" },
+          { word: "Cryptocurrency", hint: "Decentralized digital currency secured through cryptographic ledgers" },
+          { word: "Satellite", hint: "Orbital artificial spacecraft relaying television broadcast and GPS" },
+          { word: "Drone", hint: "Unmanned aerial vehicle piloted remotely to film high altitude videos" },
+          { word: "Microchip", hint: "Tiny silicon wafer packing billions of microscopic transistors" },
+          { word: "Virtual Reality", hint: "Immersive computer-generated 3D simulated world viewed via goggles" },
+          { word: "Firewall", hint: "Network barrier inspecting and blocking illicit packet intrusions" },
+          { word: "Telescope", hint: "Optical tube instrument magnifying distant galaxies, stars, and moons" },
+          { word: "Astronaut", hint: "Certified specialist trained for human spaceflight missions" },
+          { word: "Supercomputer", hint: "High-performance processing cluster performing quadrillions of math steps" },
+          { word: "Database", hint: "Structured repository organizing massive amounts of data records" },
+          { word: "Open Source", hint: "Software whose source code is freely published for community inspection" },
+          { word: "Bandwidth", hint: "Maximum rate of data transfer along a given network communication path" },
+          { word: "Bluetooth", hint: "Short-range wireless standard linking earplugs, keyboards, and phones" },
+          { word: "Browser", hint: "Application program enabling you to navigate web pages and sites" },
+          { word: "Quantum Physics", hint: "Branch of science examining the strange nature of subatomic particles" },
+          { word: "Solar Panel", hint: "Photovoltaic module absorbing radiant sunlight to produce electricity" }
+        ]
+      },
+      food: {
+        id: "food",
+        name: "🍕 Ẩm thực quốc tế",
+        icon: "fa-utensils",
+        words: [
+          { word: "Spatula", hint: "Flat broad utensil ideal for flipping burgers or sunny-side-up eggs" },
+          { word: "Recipe", hint: "Detailed list of ingredients and instructions guiding how to cook a meal" },
+          { word: "Appetizer", hint: "Small savory dish served before the main course to stimulate hunger" },
+          { word: "Espresso", hint: "Concentrated strong Italian coffee brewed by forcing steam through beans" },
+          { word: "Dessert", hint: "Sweet food eaten at the concluding end of lunch or dinner" },
+          { word: "Barbecue", hint: "Outdoor social cookout grilling marinated meats over smoking hot coals" },
+          { word: "Chopsticks", hint: "Pair of slender tapered sticks used traditionally in East Asian dining" },
+          { word: "Seasoning", hint: "Spices, herbs, or salt added to enhance natural savory aroma" },
+          { word: "Fermentation", hint: "Chemical breakdown by bacteria or yeast producing yogurt, cheese, or beer" },
+          { word: "Blender", hint: "Electric appliance with whirling stainless blades puréeing fruit smoothies" },
+          { word: "Marinade", hint: "Liquid seasoning sauce soaking raw meat before roasting or grilling" },
+          { word: "Pastry", hint: "Baked dough confection filled with fruit, chocolate, or sweet cream" },
+          { word: "Seafood", hint: "Edible crustaceans, mollusks, and saltwater fish harvested from the ocean" },
+          { word: "Vegetarian", hint: "Dietary preference avoiding all meat and poultry products" },
+          { word: "Apron", hint: "Protective cloth tied around the waist to shield clothes from hot splatters" },
+          { word: "Buffet", hint: "Self-service banquet where guests help themselves from long food counters" },
+          { word: "Microwave", hint: "Kitchen appliance using electromagnetic waves to reheat food in seconds" },
+          { word: "Sommelier", hint: "Trained wine steward assisting restaurant diners with bottle pairings" },
+          { word: "Noodle", hint: "Long thin ribbon of rolled unleavened dough boiled in savory broth" },
+          { word: "Avocado", hint: "Green pear-shaped fruit with creamy buttery flesh and a round pit" }
+        ]
+      },
+      travel: {
+        id: "travel",
+        name: "✈️ Du lịch & Khám phá",
+        icon: "fa-plane-departure",
+        words: [
+          { word: "Passport", hint: "Official government booklet certifying identity for cross-border journeys" },
+          { word: "Boarding Pass", hint: "Document granting permission to step onto a scheduled flight" },
+          { word: "Souvenir", hint: "Memento bought during holidays to reminisce about visited places" },
+          { word: "Itinerary", hint: "Planned day-by-day travel schedule mapping out stops and tours" },
+          { word: "Customs", hint: "Border checkpoint inspecting imported goods and declaration papers" },
+          { word: "Lighthouse", hint: "Coastal beacon tower with spinning beam alerting sailors to rocks" },
+          { word: "Hostel", hint: "Budget accommodation offering shared dorm bunks to backpackers" },
+          { word: "Jet Lag", hint: "Extreme fatigue caused by traveling rapidly across multiple time zones" },
+          { word: "Currency Exchange", hint: "Counter converting local banknotes into destination banknotes" },
+          { word: "Cruise Ship", hint: "Massive passenger liner sailing luxury voyages between tropical ports" },
+          { word: "Glacier", hint: "Colossal frozen mass of river ice drifting imperceptibly down valleys" },
+          { word: "Pyramid", hint: "Ancient monumental stone polygon built by pharaohs along the Nile" },
+          { word: "Compass", hint: "Magnetic navigation instrument with a needle gravitating towards North" },
+          { word: "Waterfall", hint: "Torrential river plunging straight down a vertical mountain precipice" },
+          { word: "Safari", hint: "Expedition into African wilderness tracking lions, giraffes, and elephants" },
+          { word: "Snorkeling", hint: "Swimming face down with a transparent mask and breathing tube" },
+          { word: "Car Rental", hint: "Hiring a private automobile for flexible autonomous road trips" },
+          { word: "Sightseeing", hint: "Touring renowned monuments, historical museums, and natural wonders" },
+          { word: "Baggage Claim", hint: "Airport carousel where disembarked flyers retrieve checked bags" },
+          { word: "Campfire", hint: "Open outdoor fire built with dry logs to roast marshmallows under stars" }
+        ]
+      },
+      nature: {
+        id: "nature",
+        name: "🌿 Tự nhiên & Động vật",
+        icon: "fa-tree",
+        words: [
+          { word: "Dolphin", hint: "Playful, highly intelligent sea mammal communicating with echolocation" },
+          { word: "Volcano", hint: "Rupture in Earth's tectonic crust venting red-hot magma and sulfur" },
+          { word: "Rainforest", hint: "Lush tropical green canopy receiving abundant rain and teeming with life" },
+          { word: "Coral Reef", hint: "Underwater colony of marine calcium structures sustaining colorful fauna" },
+          { word: "Tornado", hint: "Violent rotating funnel cloud descending from severe storm clouds" },
+          { word: "Chameleon", hint: "Lizard capable of shifting skin pigmentation to camouflage with leaves" },
+          { word: "Earthquake", hint: "Violent subterranean tremor caused by shifting subterranean fault lines" },
+          { word: "Desert", hint: "Arid barren expanse covered with sand dunes receiving scarce precipitation" },
+          { word: "Penguin", hint: "Flightless aquatic bird sporting a tuxedo plumage living in Antarctica" },
+          { word: "Meteor Shower", hint: "Spectacular nocturnal celestial event with shooting space debris burns" },
+          { word: "Cactus", hint: "Spiny desert succulent storing gallons of water in thick fleshy stems" },
+          { word: "Ecosystem", hint: "Interconnected biological community where flora, fauna, and soil thrive" },
+          { word: "Avalanche", hint: "Massive slab of snow suddenly sliding catastrophically down a peak" },
+          { word: "Hibernation", hint: "State of deep dormant inactivity entered by bears throughout cold winter" },
+          { word: "Lightning", hint: "Gigantic electric electrostatic discharge flashing between clouds and ground" },
+          { word: "Octopus", hint: "Eight-tentacled cephalopod with blue blood and extraordinary camouflage" },
+          { word: "Savanna", hint: "Grassy tropical plain scattered with drought-resistant acacia trees" },
+          { word: "Fossil", hint: "Petrified skeletal impression of ancient organisms preserved in stone" },
+          { word: "Photosynthesis", hint: "Process whereby green plants harness sunlight to synthesize sugar" },
+          { word: "Oasis", hint: "Isolated spot of lush vegetation and freshwater spring within desert sands" }
+        ]
+      },
+      idioms: {
+        id: "idioms",
+        name: "💬 Thành ngữ & Cụm từ",
+        icon: "fa-quote-left",
+        words: [
+          { word: "Piece of Cake", hint: "Idiom describing an extraordinarily easy, effortless undertaking" },
+          { word: "Bite the Bullet", hint: "Force yourself to confront a painful or unpleasant situation bravely" },
+          { word: "Break a Leg", hint: "Theatrical idiom wishing good luck right before stepping onto stage" },
+          { word: "Spill the Beans", hint: "Inadvertently or intentionally revealing confidential secret gossip" },
+          { word: "Under the Weather", hint: "Feeling slightly unwell, exhausted, or coming down with a cold" },
+          { word: "Cost an Arm and a Leg", hint: "Exorbitantly pricey, costing an unreasonable fortune of cash" },
+          { word: "Hit the Books", hint: "Sit down to study rigorously, especially before an important exam" },
+          { word: "Burn the Midnight Oil", hint: "Work or study extremely late into the deep dark hours of night" },
+          { word: "Once in a Blue Moon", hint: "Something occurring very rarely, almost once in a decade" },
+          { word: "Cold Feet", hint: "Sudden wave of hesitation, nervousness, and reluctance before a big leap" },
+          { word: "Kill Two Birds With One Stone", hint: "Accomplish two distinct goals simultaneously with a single action" },
+          { word: "Blessing in Disguise", hint: "Something initially seeming bad that unexpectedly yields positive fruits" },
+          { word: "Beat Around the Bush", hint: "Deliberately evading the direct topic and discussing secondary fluff" },
+          { word: "See Eye to Eye", hint: "Being in complete harmony and reaching unanimous consensus" },
+          { word: "Cut Corners", hint: "Taking cheap shortcuts to save time or money, compromising quality" }
+        ]
+      }
+    };
+
+    const STORAGE_KEY_PLAYED = 'clara_flashcard_played_words_v2';
+
+    // State Variables
+    let selectedTopicKey = 'vn_life';
+    let playerNames = {
+      1: "Player 1",
+      2: "Player 2"
+    };
+    let scores = {
+      1: 0,
+      2: 0
+    };
+    let matchStats = {
+      correct: 0,
+      wrong: 0,
+      skipped: 0
+    };
+    let currentTurn = 1; // 1 or 2 (Describer)
+    let turnIndex = 1;   // Word counter (1, 2, 3...)
+    let currentDeck = [];
+    let currentCard = null;
+    let soundEnabled = true;
+
+    // Strict In-Session Blacklists:
+    // Any word skipped in this match/session MUST NEVER return under any circumstances during this game!
+    let sessionSkippedWords = new Set();
+    let sessionPlayedWords = new Set();
+
+    // Played Words Persistence via LocalStorage
+    function getPlayedWordsSet() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_PLAYED);
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function savePlayedWord(word) {
+      if (!word) return;
+      try {
+        const set = getPlayedWordsSet();
+        set.add(word.trim().toLowerCase());
+        localStorage.setItem(STORAGE_KEY_PLAYED, JSON.stringify(Array.from(set)));
+      } catch (e) {}
+    }
+
+    function resetPlayedHistory() {
+      triggerHaptic(20);
+      if (confirm('Làm mới lại toàn bộ lịch sử từ đã chơi để bắt đầu ôn lại từ đầu? (Các từ đã skip trong ván này cũng sẽ được xoá)')) {
+        try {
+          localStorage.removeItem(STORAGE_KEY_PLAYED);
+        } catch (e) {}
+        sessionSkippedWords.clear();
+        sessionPlayedWords.clear();
+        reloadTopicDeck();
+        nextCard();
+      }
+    }
+
+    // Web Audio API Synthesizer (Zero external dependencies)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function triggerHaptic(duration = 20) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(duration); } catch (e) {}
+      }
+    }
+
+    function playTone(freq, type, duration, delay = 0) {
+      if (!soundEnabled) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        }, delay * 1000);
+      } catch (e) {}
+    }
+
+    function soundCorrect() {
+      playTone(523.25, 'sine', 0.12, 0);     // C5
+      playTone(659.25, 'sine', 0.18, 0.08);   // E5
+      playTone(783.99, 'sine', 0.25, 0.16);   // G5
+    }
+
+    function soundWrong() {
+      playTone(280, 'triangle', 0.14, 0);
+      playTone(210, 'triangle', 0.22, 0.08);
+    }
+
+    function soundSkip() {
+      playTone(349.23, 'sine', 0.1, 0);     // F4
+      playTone(261.63, 'sine', 0.16, 0.07); // C4
+    }
+
+    function soundTurnSwitch() {
+      playTone(440, 'sine', 0.08, 0);
+    }
+
+    function soundTopicSwitch() {
+      playTone(392, 'sine', 0.1, 0);
+      playTone(587.33, 'sine', 0.18, 0.08);
+    }
+
+    function soundFanfare() {
+      playTone(523.25, 'triangle', 0.15, 0);
+      playTone(659.25, 'triangle', 0.15, 0.12);
+      playTone(783.99, 'triangle', 0.2, 0.24);
+      playTone(1046.50, 'triangle', 0.45, 0.36);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      triggerHaptic(15);
+      const icon = document.getElementById('sound-icon');
+      icon.className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    }
+
+    function toggleFullscreen() {
+      triggerHaptic(15);
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // Fisher-Yates (Knuth) Shuffle O(n)
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Get all words for the chosen topic
+    function getTopicWordList(topicKey) {
+      if (topicKey === 'all') {
+        const aggregated = [];
+        for (const k in TOPICS) {
+          if (k !== 'all' && TOPICS[k].words) {
+            TOPICS[k].words.forEach(w => {
+              aggregated.push({ ...w, topicName: TOPICS[k].name });
+            });
+          }
+        }
+        return aggregated;
+      }
+      const t = TOPICS[topicKey];
+      if (!t || !t.words) return [];
+      return t.words.map(w => ({ ...w, topicName: t.name }));
+    }
+
+    function renderTopicsBar() {
+      const container = document.getElementById('topics-bar');
+      container.innerHTML = '';
+
+      for (const key in TOPICS) {
+        const topic = TOPICS[key];
+        const chip = document.createElement('div');
+        chip.className = `topic-chip ${key === selectedTopicKey ? 'active' : ''}`;
+        chip.dataset.key = key;
+        chip.innerHTML = `<i class="fa-solid ${topic.icon}"></i> ${topic.name}`;
+        chip.onclick = () => selectTopic(key);
+        container.appendChild(chip);
+      }
+    }
+
+    function selectTopic(topicKey) {
+      if (topicKey === selectedTopicKey) return;
+      selectedTopicKey = topicKey;
+      triggerHaptic(20);
+      soundTopicSwitch();
+
+      // Update UI active chip
+      document.querySelectorAll('.topic-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.key === topicKey);
+      });
+
+      // Prepare fresh randomized non-repeating deck for this topic
+      reloadTopicDeck();
+      nextCard();
+    }
+
+    // Core Anti-Repetition Engine:
+    // 1. Filter out words already played in previous sessions (localStorage)
+    // 2. CRITICAL: Any word skipped in this session (sessionSkippedWords) MUST NEVER RETURN during this whole session!
+    function reloadTopicDeck() {
+      const fullPool = getTopicWordList(selectedTopicKey);
+      const playedSet = getPlayedWordsSet();
+
+      // Filter words never played before, strictly excluding any skipped words from this session
+      let unplayedWords = fullPool.filter(w => {
+        const key = w.word.trim().toLowerCase();
+        if (sessionSkippedWords.has(key)) return false; // Skipped words NEVER return!
+        if (sessionPlayedWords.has(key)) return false;  // Already played in active session
+        return !playedSet.has(key);
+      });
+
+      // If all words in this topic have been played in prior sessions,
+      // allow recycling ONLY words that were NOT played or skipped in this active session!
+      if (unplayedWords.length === 0 && fullPool.length > 0) {
+        const eligibleToRecycle = fullPool.filter(w => {
+          const key = w.word.trim().toLowerCase();
+          return !sessionSkippedWords.has(key) && !sessionPlayedWords.has(key);
+        });
+
+        if (eligibleToRecycle.length > 0) {
+          // Clear their keys from localStorage playedSet so they can cycle
+          eligibleToRecycle.forEach(w => playedSet.delete(w.word.trim().toLowerCase()));
+          try {
+            localStorage.setItem(STORAGE_KEY_PLAYED, JSON.stringify(Array.from(playedSet)));
+          } catch (e) {}
+          unplayedWords = eligibleToRecycle;
+        } else {
+          // Every single word in this topic was either played or skipped in this current match!
+          unplayedWords = [];
+        }
+      }
+
+      currentDeck = shuffle(unplayedWords);
+      updateDeckStats(fullPool.length, unplayedWords.length);
+    }
+
+    function updateDeckStats(totalCount, remainingCount) {
+      const statsEl = document.getElementById('deck-stats');
+      if (!statsEl) return;
+      
+      const fullPool = getTopicWordList(selectedTopicKey);
+      const total = totalCount !== undefined ? totalCount : fullPool.length;
+      const remaining = remainingCount !== undefined ? remainingCount : currentDeck.length;
+      const skippedCount = sessionSkippedWords.size;
+
+      if (skippedCount > 0) {
+        statsEl.innerText = `Chưa chơi: ${remaining}/${total} • Đã skip: ${skippedCount}`;
+      } else {
+        statsEl.innerText = `Chưa chơi: ${remaining}/${total}`;
+      }
+    }
+
+    function promptPlayerName(playerNumber) {
+      triggerHaptic(20);
+      const current = playerNames[playerNumber];
+      const newName = prompt(`Nhập tên cho Người chơi ${playerNumber}:`, current);
+      if (newName && newName.trim()) {
+        playerNames[playerNumber] = newName.trim();
+        document.getElementById(`name-p${playerNumber}`).innerText = playerNames[playerNumber];
+        updateTurnDisplay();
+      }
+    }
+
+    function initGame() {
+      scores = { 1: 0, 2: 0 };
+      matchStats = { correct: 0, wrong: 0, skipped: 0 };
+      sessionSkippedWords.clear();
+      sessionPlayedWords.clear();
+      currentTurn = 1;
+      turnIndex = 1;
+
+      document.getElementById('score-p1').innerText = '0';
+      document.getElementById('score-p2').innerText = '0';
+      
+      renderTopicsBar();
+      reloadTopicDeck();
+      updateTurnDisplay();
+      nextCard();
+      initCardSwipeGestures();
+    }
+
+    function updateTurnDisplay() {
+      const cardP1 = document.getElementById('card-p1');
+      const cardP2 = document.getElementById('card-p2');
+      const turnBanner = document.getElementById('turn-banner');
+      const describerLabel = document.getElementById('describer-label');
+      const guesserLabel = document.getElementById('guesser-label');
+      const mainCard = document.getElementById('card');
+      const turnCountEl = document.getElementById('turn-count');
+
+      const describerPlayer = currentTurn;
+      const guesserPlayer = (currentTurn === 1) ? 2 : 1;
+
+      turnCountEl.innerText = `Từ #${turnIndex}`;
+      describerLabel.innerText = playerNames[describerPlayer];
+      guesserLabel.innerText = playerNames[guesserPlayer];
+
+      if (currentTurn === 1) {
+        cardP1.classList.add('active');
+        cardP2.classList.remove('active');
+        turnBanner.className = 'turn-banner turn-p1';
+        mainCard.className = 'card p1-turn';
+      } else {
+        cardP2.classList.add('active');
+        cardP1.classList.remove('active');
+        turnBanner.className = 'turn-banner turn-p2';
+        mainCard.className = 'card p2-turn';
+      }
+    }
+
+    function nextCard() {
+      // If deck is exhausted, reload with unplayed words (keeping skipped words blocked)
+      if (currentDeck.length === 0) {
+        reloadTopicDeck();
+      }
+
+      if (currentDeck.length === 0) {
+        // All words in this topic have been played or skipped in this active session!
+        currentCard = null;
+        document.getElementById('word').innerText = "Đã hết từ!";
+        document.getElementById('topic-tag-label').innerText = "Hết từ";
+        const hintEl = document.getElementById('hint');
+        hintEl.innerHTML = `<span style="color: #38bdf8;">Bạn đã chơi hoặc bỏ qua toàn bộ từ của chủ đề này trong ván hiện tại.</span><br><span style="font-size: 0.8rem; color: #94a3b8;">Hãy chuyển sang chủ đề khác ở thanh phía trên hoặc bấm 'Làm mới ván'!</span>`;
+        hintEl.style.display = 'block';
+        document.getElementById('hint-prompt').style.display = 'none';
+        document.getElementById('card-badge').innerHTML = '<i class="fa-solid fa-flag-checkered"></i> Hoàn thành chủ đề';
+        updateDeckStats();
+        return;
+      }
+
+      // Pop guarantees zero repetition within the deck
+      currentCard = currentDeck.pop();
+      updateDeckStats();
+
+      // Record as played to local storage and active session
+      if (currentCard) {
+        const key = currentCard.word.trim().toLowerCase();
+        sessionPlayedWords.add(key);
+        savePlayedWord(currentCard.word);
+      }
+
+      document.getElementById('word').innerText = currentCard.word;
+      document.getElementById('topic-tag-label').innerText = currentCard.topicName || TOPICS[selectedTopicKey]?.name || 'Từ vựng';
+
+      const hintEl = document.getElementById('hint');
+      const hintPrompt = document.getElementById('hint-prompt');
+      hintEl.innerText = currentCard.hint;
+      hintEl.style.display = 'none';
+      hintPrompt.style.display = 'flex';
+      document.getElementById('card-badge').innerHTML = '<i class="fa-regular fa-lightbulb"></i> Chạm để xem gợi ý';
+
+      // Reset card transform
+      const mainCard = document.getElementById('card');
+      mainCard.style.transform = '';
+      mainCard.style.opacity = '1';
+    }
+
+    function toggleHint() {
+      triggerHaptic(15);
+      const hintEl = document.getElementById('hint');
+      const hintPrompt = document.getElementById('hint-prompt');
+      const badge = document.getElementById('card-badge');
+
+      if (hintEl.style.display === 'none' || !hintEl.style.display) {
+        hintEl.style.display = 'block';
+        hintPrompt.style.display = 'none';
+        badge.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Đang hiện gợi ý';
+      } else {
+        hintEl.style.display = 'none';
+        hintPrompt.style.display = 'flex';
+        badge.innerHTML = '<i class="fa-regular fa-lightbulb"></i> Chạm để xem gợi ý';
+      }
+    }
+
+    // Handle Correct or Wrong guess
+    function handleAnswer(isCorrect) {
+      if (!currentCard) return;
+
+      const mainCard = document.getElementById('card');
+
+      if (isCorrect) {
+        triggerHaptic(35);
+        soundCorrect();
+        scores[currentTurn]++;
+        matchStats.correct++;
+        document.getElementById(`score-p${currentTurn}`).innerText = scores[currentTurn];
+
+        mainCard.classList.add('flash-success');
+        setTimeout(() => mainCard.classList.remove('flash-success'), 280);
+      } else {
+        triggerHaptic([20, 40, 20]);
+        soundWrong();
+        matchStats.wrong++;
+        mainCard.classList.add('flash-danger');
+        setTimeout(() => mainCard.classList.remove('flash-danger'), 280);
+      }
+
+      // Switch turn to the other player (1 -> 2 -> 1)
+      currentTurn = (currentTurn === 1) ? 2 : 1;
+      turnIndex++;
+
+      soundTurnSwitch();
+      updateTurnDisplay();
+      nextCard();
+    }
+
+    // Handle Skip Word:
+    // Người gợi ý không biết diễn tả -> 0 điểm, từ này vĩnh viễn không quay lại trong cả ván chơi đó!
+    function handleSkip() {
+      if (!currentCard) return;
+
+      triggerHaptic(25);
+      soundSkip();
+      matchStats.skipped++;
+
+      // Strict enforcement: add to sessionSkippedWords so it NEVER appears again in this game session!
+      const wordKey = currentCard.word.trim().toLowerCase();
+      sessionSkippedWords.add(wordKey);
+      savePlayedWord(currentCard.word);
+
+      const mainCard = document.getElementById('card');
+      mainCard.classList.add('flash-skip');
+      setTimeout(() => mainCard.classList.remove('flash-skip'), 280);
+
+      // Người gợi ý hiện tại nhận 0 điểm, lượt tự động chuyển sang người kia
+      currentTurn = (currentTurn === 1) ? 2 : 1;
+      turnIndex++;
+
+      soundTurnSwitch();
+      updateTurnDisplay();
+      nextCard();
+    }
+
+    function resetGame() {
+      triggerHaptic(20);
+      if (confirm('Bắt đầu lại ván đấu mới và xóa điểm số hiện tại? (Lưu ý: Các từ đã skip trong ván mới sẽ bắt đầu tính lại từ đầu)')) {
+        initGame();
+      }
+    }
+
+    function showWinnerModal() {
+      triggerHaptic([40, 60, 40, 80]);
+      soundFanfare();
+      const modal = document.getElementById('winner-modal');
+      const title = document.getElementById('modal-winner-name');
+      const sub = document.getElementById('modal-sub');
+      const trophy = document.getElementById('modal-trophy');
+
+      document.getElementById('modal-p1-name').innerText = playerNames[1];
+      document.getElementById('modal-p1-score').innerText = scores[1];
+      document.getElementById('modal-p2-name').innerText = playerNames[2];
+      document.getElementById('modal-p2-score').innerText = scores[2];
+
+      document.getElementById('stat-correct').innerText = matchStats.correct;
+      document.getElementById('stat-wrong').innerText = matchStats.wrong;
+      document.getElementById('stat-skipped').innerText = matchStats.skipped;
+
+      if (scores[1] > scores[2]) {
+        trophy.innerText = '🏆';
+        title.innerText = `${playerNames[1]} Thắng!`;
+        title.style.color = 'var(--p1-light)';
+        sub.innerText = `Dẫn trước với tỷ số ${scores[1]} - ${scores[2]}`;
+      } else if (scores[2] > scores[1]) {
+        trophy.innerText = '🏆';
+        title.innerText = `${playerNames[2]} Thắng!`;
+        title.style.color = 'var(--p2-light)';
+        sub.innerText = `Dẫn trước với tỷ số ${scores[2]} - ${scores[1]}`;
+      } else {
+        trophy.innerText = '🤝';
+        title.innerText = 'Trận Đấu Hòa!';
+        title.style.color = '#38bdf8';
+        sub.innerText = `Cả hai người chơi đều có điểm số bằng nhau (${scores[1]} - ${scores[2]})`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeWinnerModalAndRestart() {
+      triggerHaptic(20);
+      document.getElementById('winner-modal').style.display = 'none';
+      initGame();
+    }
+
+    // Touch and Swipe Gestures for Mobile Phones (Tinder-style card swipes)
+    function initCardSwipeGestures() {
+      const card = document.getElementById('card');
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let isDragging = false;
+      const SWIPE_THRESHOLD = 65;
+
+      card.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        currentX = startX;
+        currentY = startY;
+        isDragging = true;
+        card.style.transition = 'none';
+      }, { passive: true });
+
+      card.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+
+        // Card interactive drag & tilt rotation
+        const rotate = deltaX * 0.08;
+        card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotate}deg)`;
+
+        // Visual feedback while dragging
+        if (deltaX > SWIPE_THRESHOLD) {
+          card.style.borderColor = 'var(--success)';
+          card.style.boxShadow = '0 0 25px var(--success-glow)';
+        } else if (deltaX < -SWIPE_THRESHOLD) {
+          card.style.borderColor = 'var(--danger)';
+          card.style.boxShadow = '0 0 25px var(--danger-glow)';
+        } else if (deltaY < -SWIPE_THRESHOLD) {
+          card.style.borderColor = 'var(--skip)';
+          card.style.boxShadow = '0 0 25px var(--skip-glow)';
+        } else {
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+        }
+      }, { passive: true });
+
+      card.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        card.style.transition = 'transform 0.2s ease, border-color 0.2s, box-shadow 0.2s';
+
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+        const distance = Math.hypot(deltaX, deltaY);
+
+        if (distance < 12) {
+          // Tap on card -> Toggle Hint
+          card.style.transform = '';
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+          toggleHint();
+          return;
+        }
+
+        if (deltaX > SWIPE_THRESHOLD) {
+          // Swipe Right -> Correct
+          card.style.transform = `translate(${deltaX + 150}px, ${deltaY}px) rotate(20deg)`;
+          card.style.opacity = '0';
+          setTimeout(() => handleAnswer(true), 150);
+        } else if (deltaX < -SWIPE_THRESHOLD) {
+          // Swipe Left -> Wrong
+          card.style.transform = `translate(${deltaX - 150}px, ${deltaY}px) rotate(-20deg)`;
+          card.style.opacity = '0';
+          setTimeout(() => handleAnswer(false), 150);
+        } else if (deltaY < -SWIPE_THRESHOLD) {
+          // Swipe Up -> Skip Word
+          card.style.transform = `translate(${deltaX}px, ${deltaY - 180}px) scale(0.9)`;
+          card.style.opacity = '0';
+          setTimeout(() => handleSkip(), 150);
+        } else {
+          // Snap back
+          card.style.transform = '';
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+        }
+      });
+    }
+
+    // Keyboard Shortcuts (Desktop / Laptop)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      const modal = document.getElementById('winner-modal');
+      if (modal.style.display === 'flex') {
+        if (e.code === 'Enter' || e.code === 'Space') {
+          closeWinnerModalAndRestart();
+        }
+        return;
+      }
+
+      if (e.code === 'KeyD' || e.code === 'ArrowRight' || e.code === 'Enter') {
+        e.preventDefault();
+        handleAnswer(true);
+      } else if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        handleAnswer(false);
+      } else if (e.code === 'KeyS' || e.code === 'ArrowDown' || e.code === 'Escape') {
+        e.preventDefault();
+        handleSkip();
+      } else if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        toggleHint();
+      }
+    });
+
+    // Start on load
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>

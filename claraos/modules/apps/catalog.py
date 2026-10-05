@@ -54,6 +54,22 @@ APP_CATALOG: List[Dict[str, Any]] = [
             "FLARESOLVERR_URL=http://flaresolverr:8191/v1"
         ]
     },
+    {
+        "id": "flashcard",
+        "name": "English Flashcard",
+        "category": "Education",
+        "description": "Luyện phản xạ tiếng Anh 2 người chơi (Describe & Guess, bộ đếm 60s, đa dạng chủ đề).",
+        "icon": "fa-layer-group",
+        "logo_id": "duolingo",
+        "url": "/apps/flashcard/",
+        "default_port": 8090,
+        "protected": True,
+        "manageable": False,
+        "installed": True,
+        "is_running": True,
+        "native": True,
+        "image": "native:claraos"
+    },
     # 2. Existing NAS Host & Core Services
     {
         "id": "omv",

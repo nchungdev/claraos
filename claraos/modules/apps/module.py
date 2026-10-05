@@ -62,7 +62,7 @@ class AppsModule(BaseModule):
                 if app_id == "agy-manager":
                     continue
 
-                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub", "agent-bridge"):
+                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub", "agent-bridge", "flashcard"):
                     catalog_with_status.append({
                         **app,
                         "restartable": bool(app.get("restart")),
