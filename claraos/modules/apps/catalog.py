@@ -84,7 +84,15 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "manageable": False,
         "installed": True,
         "is_running": True,
-        "image": "native:agent-hub"
+        "image": "native:agent-hub",
+        # how ClaraOS restarts this app's server (it is not a Docker container): the host process
+        # exposes POST /api/admin/restart; override the URL when the host is not host.docker.internal
+        "restart": {
+            "kind": "http",
+            "url": "http://host.docker.internal:8088/api/admin/restart",
+            "url_env": "AGENT_HUB_RESTART_URL",
+            "confirm": "Restart server Clara? Mọi terminal và agent đang chạy trong Clara sẽ bị tắt.",
+        },
     },
     {
         "id": "rclone",

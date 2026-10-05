@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import os
 from typing import Dict, Any, List
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -62,6 +64,7 @@ class AppsModule(BaseModule):
                 if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub"):
                     catalog_with_status.append({
                         **app,
+                        "restartable": bool(app.get("restart")),
                         "compose_uuid": compose_uuid,
                         "installed": True,
                         "state": "running",
@@ -80,6 +83,7 @@ class AppsModule(BaseModule):
                     **app,
                     "compose_uuid": compose_uuid,
                     "image": img,
+                    "restartable": installed,
                     "installed": installed,
                     "state": state,
                     "container_id": cid,
@@ -113,6 +117,7 @@ class AppsModule(BaseModule):
                     "is_running": c.get("State") == "running",
                     "manageable": False,
                     "protected": True,
+                    "restartable": True,
                     "compose_uuid": uuid_map.get(name.lower(), "")
                 })
 
@@ -225,6 +230,11 @@ class AppsModule(BaseModule):
             if action == "install":
                 return await install_app(app_id, None)
 
+            # apps whose server is not a Docker container declare how to restart it in the catalog
+            if action == "restart" and app.get("restart"):
+                await self._restart_via_spec(app)
+                return {"status": "ok", "app_id": app_id, "action": action}
+
             if not c:
                 raise HTTPException(status_code=404, detail="Container is not installed on this server")
 
@@ -244,6 +254,20 @@ class AppsModule(BaseModule):
                 raise HTTPException(status_code=500, detail=f"Failed to {action} container")
 
             return {"status": "ok", "app_id": app_id, "action": action}
+
+    async def _restart_via_spec(self, app: Dict[str, Any]) -> None:
+        spec = app["restart"]
+        if spec.get("kind") != "http":
+            raise HTTPException(status_code=400, detail="Unsupported restart method")
+        url = os.environ.get(spec.get("url_env", ""), "") or spec["url"]
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.post(url)
+        except httpx.HTTPError as e:
+            logger.error("Restart of %s failed: %s", app["id"], e)
+            raise HTTPException(status_code=502, detail=f"Cannot reach {app['name']} server: {e}")
+        if res.status_code >= 300:
+            raise HTTPException(status_code=502, detail=f"{app['name']} refused restart (HTTP {res.status_code})")
 
     async def start(self) -> bool:
         self.is_running = True

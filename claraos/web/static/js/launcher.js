@@ -174,6 +174,17 @@
         }
       }
 
+      // Restart the app's own server when it is not a managed Docker container (those have "Khởi động lại" above)
+      if (!canManage && app.restartable) {
+        actionsHtml += `
+          <button onclick="restartServer('${app.id}'); closeContextMenu();" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-indigo-500/20 text-left transition">
+            <i class="fa-solid fa-power-off text-indigo-400 w-4 text-center"></i>
+            <span>Restart server</span>
+          </button>
+        `;
+      }
+
       // 3. Sao chép URL
       actionsHtml += `
         <div class="h-px bg-slate-800/80 my-1"></div>
@@ -201,7 +212,7 @@
       // Position popup clamped within viewport
       menu.classList.remove('hidden');
       const menuWidth = 210;
-      const menuHeight = 240;
+      const menuHeight = 280;
       let posX = e.clientX;
       let posY = e.clientY;
 
@@ -314,6 +325,26 @@
     async function controlApp(appId, action) {
       await fetch(`/api/modules/apps/${appId}/${action}`, { method: 'POST' });
       await loadAppCatalog(true);
+    }
+
+    async function restartServer(appId) {
+      const app = appCatalogMap[appId];
+      if (!app) return;
+      const msg = (app.restart && app.restart.confirm) || `Restart server của ${app.name}?`;
+      if (!window.confirm(msg)) return;
+      try {
+        const res = await fetch(`/api/modules/apps/${appId}/restart`, { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          window.alert(`Restart thất bại: ${err.detail || res.status}`);
+          return;
+        }
+      } catch (e) {
+        window.alert(`Restart thất bại: ${e}`);
+        return;
+      }
+      // the server needs a moment to come back before the status is meaningful
+      setTimeout(() => loadAppCatalog(true), 3000);
     }
 
     let pendingUninstallAppId = null;
