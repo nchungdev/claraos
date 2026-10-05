@@ -60,15 +60,15 @@ apps:
     subdomain: ariang
     installable: false
 
-  - id: agent-hub
-    name: Clara
+  - id: agent-bridge
+    name: Agent Bridge
     category: Automation
-    description: Clara — điều phối Antigravity, Claude Code và Codex.
-    container_name: agent-hub
-    container_aliases: [clara, nexus-ai]
-    icon: fa-brain
-    logo: /icons/clara.svg
-    logo_id: clara
+    description: Agent Bridge — điều phối Antigravity, Claude Code và Codex.
+    container_name: agent-bridge
+    container_aliases: [agent-hub, clara, nexus-ai]
+    icon: fa-bolt
+    logo: /icons/bridge.svg
+    logo_id: bridge
     default_port: 8088
     subdomain: agent
     installable: false

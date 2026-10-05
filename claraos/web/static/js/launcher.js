@@ -41,6 +41,20 @@
     }
 
 
+    // OMV's "create Compose file" page (the same host logic as openComposeEdit)
+    function openOmvComposeCreate() {
+      const host = window.location.hostname;
+      let omvBase = '';
+      if (isLocalOrIp(host)) {
+        omvBase = `http://${host}:80`;
+      } else {
+        const parts = host.split('.');
+        const baseDomain = parts.length > 2 ? parts.slice(-2).join('.') : host;
+        omvBase = `${window.location.protocol}//omv.${baseDomain}`;
+      }
+      window.open(`${omvBase}/#/services/compose/files/create`, '_blank', 'noopener,noreferrer');
+    }
+
     function isLocalOrIp(host) {
       if (!host || host === 'localhost' || host === '127.0.0.1') return true;
       const ipv4Pattern = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
@@ -327,45 +341,152 @@
       await loadAppCatalog(true);
     }
 
+    function showToast(message, type = 'info', duration = 3500) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'glass-panel pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl text-xs text-white backdrop-blur-md transition-all duration-300 opacity-0 translate-y-2';
+
+      let icon = '<i class="fa-solid fa-circle-info text-cyan-400 text-sm"></i>';
+      let border = 'border-slate-700/80';
+      if (type === 'success') {
+        icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>';
+        border = 'border-emerald-500/30';
+      } else if (type === 'error') {
+        icon = '<i class="fa-solid fa-circle-exclamation text-rose-400 text-sm"></i>';
+        border = 'border-rose-500/30';
+      } else if (type === 'warning') {
+        icon = '<i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>';
+        border = 'border-amber-500/30';
+      }
+
+      toast.className += ` ${border}`;
+      toast.innerHTML = `
+        ${icon}
+        <span class="font-medium">${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+    window.showToast = showToast;
+
+    let pendingAction = null;
+
+    function openActionConfirmModal(title, message, confirmText, onConfirm) {
+      const modal = document.getElementById('modal-action-confirm');
+      if (!modal) {
+        if (confirm(message)) onConfirm();
+        return;
+      }
+      const titleEl = document.getElementById('modal-action-title');
+      if (titleEl) titleEl.textContent = title;
+      const msgEl = document.getElementById('modal-action-message');
+      if (msgEl) msgEl.textContent = message;
+      const btnTextEl = document.getElementById('modal-action-confirm-text');
+      if (btnTextEl) btnTextEl.textContent = confirmText || 'Xác nhận';
+      
+      pendingAction = onConfirm;
+      modal.classList.remove('hidden');
+    }
+
+    function closeActionConfirmModal() {
+      pendingAction = null;
+      const modal = document.getElementById('modal-action-confirm');
+      if (modal) modal.classList.add('hidden');
+    }
+    window.closeActionConfirmModal = closeActionConfirmModal;
+
+    const actionConfirmBtn = document.getElementById('modal-btn-confirm-action');
+    if (actionConfirmBtn) {
+      actionConfirmBtn.onclick = async () => {
+        const action = pendingAction;
+        closeActionConfirmModal();
+        if (action) await action();
+      };
+    }
+
     async function restartServer(appId) {
       const app = appCatalogMap[appId];
       if (!app) return;
-      const msg = (app.restart && app.restart.confirm) || `Restart server của ${app.name}?`;
-      if (!window.confirm(msg)) return;
-      try {
-        const res = await fetch(`/api/modules/apps/${appId}/restart`, { method: 'POST' });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          window.alert(`Restart thất bại: ${err.detail || res.status}`);
-          return;
+      const msg = (app.restart && app.restart.confirm) || `Mọi terminal và agent đang chạy trong ${app.name} sẽ bị ngắt kết nối tạm thời.`;
+
+      openActionConfirmModal(
+        `Khởi động lại ${app.name}?`,
+        msg,
+        'Khởi động lại',
+        async () => {
+          showToast(`Đang gửi yêu cầu khởi động lại ${app.name}...`, 'info');
+          try {
+            const res = await fetch(`/api/modules/apps/${appId}/restart`, { method: 'POST' });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              showToast(`Restart thất bại: ${err.detail || res.status}`, 'error', 5000);
+              return;
+            }
+            showToast(`Đã gửi lệnh restart tới ${app.name}!`, 'success');
+          } catch (e) {
+            showToast(`Restart thất bại: ${e}`, 'error', 5000);
+            return;
+          }
+          setTimeout(() => loadAppCatalog(true), 3000);
         }
-      } catch (e) {
-        window.alert(`Restart thất bại: ${e}`);
-        return;
-      }
-      // the server needs a moment to come back before the status is meaningful
-      setTimeout(() => loadAppCatalog(true), 3000);
+      );
     }
 
     let pendingUninstallAppId = null;
 
     function confirmUninstall(appId, appName) {
       pendingUninstallAppId = appId;
-      document.getElementById('modal-uninstall-title').textContent = `Gỡ cài đặt ${appName}?`;
-      document.getElementById('modal-uninstall').classList.remove('hidden');
+      const titleEl = document.getElementById('modal-uninstall-title');
+      if (titleEl) titleEl.textContent = `Gỡ cài đặt ${appName}?`;
+      
+      const pathEl = document.getElementById('uninstall-config-path');
+      if (pathEl) pathEl.textContent = `/appdata/${appId}`;
+
+      const purgeCb = document.getElementById('uninstall-purge-checkbox');
+      if (purgeCb) purgeCb.checked = false;
+
+      const modal = document.getElementById('modal-uninstall');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeUninstallModal() {
       pendingUninstallAppId = null;
-      document.getElementById('modal-uninstall').classList.add('hidden');
+      const modal = document.getElementById('modal-uninstall');
+      if (modal) modal.classList.add('hidden');
     }
 
-    document.getElementById('modal-btn-confirm-delete').onclick = async () => {
-      if (!pendingUninstallAppId) return;
-      const appId = pendingUninstallAppId;
-      closeUninstallModal();
-      await fetch(`/api/modules/apps/${appId}/uninstall`, { method: 'POST' });
-      await loadAppCatalog(true);
-      if (currentTab === 'store') renderStoreItems();
-    };
+    const confirmDelBtn = document.getElementById('modal-btn-confirm-delete');
+    if (confirmDelBtn) {
+      confirmDelBtn.onclick = async () => {
+        if (!pendingUninstallAppId) return;
+        const appId = pendingUninstallAppId;
+        const purgeCb = document.getElementById('uninstall-purge-checkbox');
+        const purgeData = Boolean(purgeCb && purgeCb.checked);
 
+        closeUninstallModal();
+        try {
+          await fetch(`/api/modules/apps/${appId}/uninstall`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ purge_data: purgeData })
+          });
+          await loadAppCatalog(true);
+          if (currentTab === 'store' && typeof renderStoreItems === 'function') {
+            renderStoreItems();
+          }
+        } catch (e) {
+          console.error('Lỗi khi gỡ cài đặt app:', e);
+        }
+      };
+    }

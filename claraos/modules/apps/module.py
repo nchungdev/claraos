@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from ...core.module_base import BaseModule
 from ...infrastructure.apps.omv_registry_reader import OmvComposeRegistry
 from .catalog import APP_CATALOG, get_full_catalog, sync_community_catalog
+from .compose_export import build_compose_yaml, compose_filename
 from .docker_client import docker_manager
 
 logger = logging.getLogger("claraos.modules.apps")
@@ -61,7 +62,7 @@ class AppsModule(BaseModule):
                 if app_id == "agy-manager":
                     continue
 
-                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub"):
+                if app_id in ("rclone", "media-organizer", "debrid-ingest", "omv", "agent-hub", "agent-bridge"):
                     catalog_with_status.append({
                         **app,
                         "restartable": bool(app.get("restart")),
@@ -158,6 +159,18 @@ class AppsModule(BaseModule):
                 "has_existing_data": has_existing_data,
                 "config_path": f"/appdata/{app['id']}"
             }
+
+        @self._router.post("/{app_id}/compose")
+        async def export_compose(app_id: str, payload: InstallPayload = None):
+            """Compose file for installing the app through OMV's Compose plugin instead of directly on the host."""
+            app = next((a for a in get_full_catalog() if a["id"].lower() == app_id.lower()), None)
+            if not app:
+                raise HTTPException(status_code=404, detail="App not found in catalog")
+            if app.get("native") or not app.get("image"):
+                raise HTTPException(status_code=400, detail="This app is not a Docker image and has no Compose file")
+            ports = payload.ports if (payload and payload.ports is not None) else None
+            volumes = payload.volumes if (payload and payload.volumes is not None) else None
+            return {"filename": compose_filename(app["id"]), "yaml": build_compose_yaml(app, ports, volumes)}
 
         @self._router.post("/{app_id}/install")
         async def install_app(app_id: str, payload: InstallPayload = None):

@@ -71,13 +71,6 @@
         </a>
 
         <!-- Trợ lý AI -->
-        <a href="#agents" data-tab="agents" class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition group">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-robot text-purple-400 w-5 text-center"></i>
-            <span>Agent Studio</span>
-          </div>
-          <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">AI</span>
-        </a>
 
         <!-- Cài đặt -->
         <a href="#settings" data-tab="settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 transition">
@@ -278,7 +271,7 @@
 
   </main>
 
-  <!-- iOS-Style Uninstall Confirmation Modal -->
+  <!-- iOS-Style Uninstall Confirmation Modal with Data Purge Option -->
   <div id="modal-uninstall" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden transition-opacity">
     <div class="glass-panel w-full max-w-sm rounded-2xl p-6 border border-slate-700/80 shadow-2xl space-y-4 text-center transform scale-95 transition-transform">
       <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-xl border border-rose-500/20">
@@ -287,16 +280,195 @@
       <div>
         <h3 id="modal-uninstall-title" class="text-base font-bold text-white">Gỡ cài đặt ứng dụng?</h3>
         <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-          Container Docker này sẽ bị gỡ bỏ khỏi hệ thống. Toàn bộ file dữ liệu trong ổ cứng NAS của bạn vẫn được bảo toàn nguyên vẹn.
+          Container Docker này sẽ bị gỡ bỏ khỏi hệ thống.
         </p>
       </div>
-      <div class="space-y-2 pt-2">
-        <button id="modal-btn-confirm-delete" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-rose-600/30">
-          Gỡ bỏ ứng dụng
+
+      <!-- Data purge option -->
+      <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-left space-y-2">
+        <label class="flex items-start gap-2.5 cursor-pointer">
+          <input type="checkbox" id="uninstall-purge-checkbox" class="mt-0.5 rounded border-slate-700 text-rose-500 focus:ring-rose-500/20 bg-slate-900">
+          <div class="text-[11px] leading-snug">
+            <span class="text-slate-200 font-semibold block">Dọn dẹp dữ liệu cấu hình (<span id="uninstall-config-path" class="font-mono text-rose-300">/appdata</span>)</span>
+            <span class="text-slate-400 block mt-0.5">Xóa trắng cấu hình & database riêng của app để cài lại như mới. Dữ liệu Phim/Media trong Storage Pool sẽ luôn được bảo toàn nguyên vẹn.</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button id="modal-btn-confirm-delete" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-rose-600/30 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-trash-can text-xs"></i>
+          <span>Xác nhận gỡ bỏ</span>
         </button>
         <button onclick="closeUninstallModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
           Hủy bỏ
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Confirmation Modal (Restart, Power off, etc.) -->
+  <div id="modal-action-confirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden transition-opacity">
+    <div class="glass-panel w-full max-w-sm rounded-2xl p-6 border border-slate-700/80 shadow-2xl space-y-4 text-center transform scale-95 transition-transform">
+      <div id="modal-action-icon-box" class="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto text-xl border border-indigo-500/20">
+        <i id="modal-action-icon" class="fa-solid fa-power-off"></i>
+      </div>
+      <div>
+        <h3 id="modal-action-title" class="text-base font-bold text-white">Xác nhận khởi động lại?</h3>
+        <p id="modal-action-message" class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+          Mọi phiên làm việc đang chạy sẽ bị ngắt kết nối tạm thời.
+        </p>
+      </div>
+      <div class="space-y-2 pt-1">
+        <button id="modal-btn-confirm-action" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-rotate text-xs"></i>
+          <span id="modal-action-confirm-text">Khởi động lại</span>
+        </button>
+        <button onclick="closeActionConfirmModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+          Hủy bỏ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-Install Setup & Storage Modal -->
+  <div id="modal-app-setup" onclick="if(event.target === this) closeAppSetupModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden transition-opacity">
+    <div class="glass-panel w-full max-w-lg rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden bg-slate-900/95 flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="p-5 border-b border-slate-800/80 flex items-center justify-between bg-gradient-to-b from-slate-800/40 to-transparent">
+        <div class="flex items-center gap-3">
+          <div id="setup-app-icon-box" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/50 flex items-center justify-center p-1.5 shadow">
+            <img id="setup-app-icon" src="" class="w-full h-full object-contain filter drop-shadow">
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span id="setup-app-name">Cài đặt ứng dụng</span>
+            </h3>
+            <p class="text-xs text-slate-400">Xác nhận đường dẫn lưu trữ & cấu hình trước khi triển khai</p>
+          </div>
+        </div>
+        <button onclick="closeAppSetupModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Setup Body -->
+      <div class="p-6 overflow-y-auto space-y-5 text-xs">
+        <!-- Detection Notice for Existing Data -->
+        <div id="setup-existing-alert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Phát hiện dữ liệu cấu hình cũ trên NAS</span>
+          </div>
+          <p class="text-slate-300 leading-relaxed text-[11px]">
+            Hệ thống tìm thấy thư mục cấu hình và cơ sở dữ liệu đã tồn tại từ lần cài trước tại <code id="setup-existing-path" class="text-amber-300 font-mono">/appdata</code>.
+          </p>
+          <div class="pt-1 space-y-1.5">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-200">
+              <input type="radio" name="setup-data-mode" value="keep" checked class="text-cyan-500 focus:ring-cyan-500/20 bg-slate-900 border-slate-700">
+              <span class="font-semibold text-cyan-300">Khôi phục & tiếp tục sử dụng</span> (Giữ nguyên phim, cài đặt, thư viện cũ)
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-slate-200">
+              <input type="radio" name="setup-data-mode" value="wipe" class="text-rose-500 focus:ring-rose-500/20 bg-slate-900 border-slate-700">
+              <span class="font-semibold text-rose-400">Xóa sạch & Cài mới từ đầu</span> (Xóa trắng /appdata của app này)
+            </label>
+          </div>
+        </div>
+
+        <!-- Install target -->
+        <div class="space-y-2">
+          <label class="text-slate-300 font-semibold flex items-center gap-1.5">
+            <i class="fa-solid fa-bullseye text-cyan-400"></i>
+            <span>Nơi cài đặt</span>
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="setup-target" value="host" checked onchange="updateSetupTarget()" class="peer sr-only">
+              <div class="rounded-2xl border border-slate-700/80 bg-slate-950/60 p-3 transition peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10">
+                <div class="flex items-center gap-2 font-semibold text-slate-100"><i class="fa-brands fa-docker text-cyan-400"></i> Host (Docker)</div>
+                <p class="mt-1 text-[11px] leading-snug text-slate-400">Cài và chạy ngay trên máy này qua Docker.</p>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="setup-target" value="omv" onchange="updateSetupTarget()" class="peer sr-only">
+              <div class="rounded-2xl border border-slate-700/80 bg-slate-950/60 p-3 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500/10">
+                <div class="flex items-center gap-2 font-semibold text-slate-100"><i class="fa-solid fa-layer-group text-indigo-400"></i> OMV Compose</div>
+                <p class="mt-1 text-[11px] leading-snug text-slate-400">Tạo file Compose để quản lý trong OpenMediaVault.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Port Configuration -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label class="text-slate-300 font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-network-wired text-cyan-400"></i>
+              <span>Cổng kết nối (Web UI Port)</span>
+            </label>
+            <span class="text-[10px] text-slate-500">Port truy cập từ trình duyệt</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="setup-input-port" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white font-mono focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition" placeholder="Ví dụ: 8080">
+          </div>
+        </div>
+
+        <!-- Storage & Volume Mappings -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label class="text-slate-300 font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-hard-drive text-cyan-400"></i>
+              <span>Đường dẫn lưu trữ (Volume Mappings)</span>
+            </label>
+            <span class="text-[10px] text-slate-500">Host Path : Container Path</span>
+          </div>
+          <div id="setup-volumes-list" class="space-y-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Quick Info Callout -->
+        <div class="bg-cyan-500/5 border border-cyan-500/15 rounded-xl p-3 flex items-start gap-2.5 text-slate-400 text-[11px]">
+          <i class="fa-solid fa-circle-info text-cyan-400 mt-0.5 text-xs"></i>
+          <span>Cấu hình này tự động đồng bộ theo Storage Pool <strong class="text-slate-200">/srv/mergerfs/MainPool</strong> và thư mục <strong class="text-slate-200">/appdata</strong> đã chuẩn hoá trên NAS.</span>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="p-4 border-t border-slate-800/80 bg-slate-950/50 flex items-center justify-end gap-2.5">
+        <button onclick="closeAppSetupModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold transition">
+          Hủy bỏ
+        </button>
+        <button id="setup-btn-confirm-install" class="px-5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-bold transition shadow-lg shadow-cyan-600/30 flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+          <span>Bắt đầu cài đặt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OMV COMPOSE RESULT MODAL -->
+  <div id="modal-compose-result" onclick="if(event.target === this) closeComposeResult()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+    <div class="glass-panel w-full max-w-xl rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden bg-slate-900/95 flex flex-col max-h-[90vh]">
+      <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-layer-group text-indigo-400"></i> File Compose cho OMV</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Tên file: <code id="compose-result-name" class="font-mono text-indigo-300"></code></p>
+        </div>
+        <button onclick="closeComposeResult()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-sm"></i></button>
+      </div>
+      <div class="p-5 space-y-3 overflow-y-auto text-xs">
+        <ol class="list-decimal list-inside space-y-1 text-slate-300 leading-relaxed">
+          <li>Bấm <strong class="text-slate-100">Mở OMV Compose</strong>, chọn <strong class="text-slate-100">Create</strong> trong Files.</li>
+          <li>Đặt tên file đúng như trên, dán nội dung dưới đây vào phần Compose file rồi lưu.</li>
+          <li>Chọn file vừa tạo và bấm <strong class="text-slate-100">Up</strong> để chạy.</li>
+        </ol>
+        <textarea id="compose-result-yaml" readonly spellcheck="false" class="w-full h-64 bg-slate-950 border border-slate-700/80 rounded-xl p-3 font-mono text-[11.5px] leading-relaxed text-slate-200 outline-none resize-y"></textarea>
+      </div>
+      <div class="p-4 border-t border-slate-800/80 bg-slate-950/50 flex flex-wrap items-center justify-end gap-2.5">
+        <button onclick="copyComposeYaml()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold transition flex items-center gap-2"><i class="fa-solid fa-copy text-xs"></i><span id="compose-copy-label">Sao chép</span></button>
+        <button onclick="downloadComposeYaml()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold transition flex items-center gap-2"><i class="fa-solid fa-download text-xs"></i> Tải xuống</button>
+        <button onclick="openOmvComposeCreate()" class="px-5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold transition shadow-lg shadow-indigo-600/30 flex items-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> Mở OMV Compose</button>
       </div>
     </div>
   </div>
@@ -399,8 +571,11 @@
     </div>
   </div>
 
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
   <script src="/js/telemetry.js"></script>
-  <script src="/js/launcher.js?v=clara-brand-1"></script>
+  <script src="/js/launcher.js?v=clara-brand-2"></script>
   <script src="/js/store.js"></script>
   <script src="/js/app.js"></script>
 </body>

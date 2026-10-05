@@ -204,17 +204,275 @@
       }
     }
 
+    let currentSetupSchema = null;
+
     async function installAppFromStore(appId, btn) {
+      await openAppSetupModal(appId, btn);
+    }
+
+    async function openAppSetupModal(appId, triggerBtn) {
+      const app = appCatalogMap[appId];
+      if (!app) return;
+
+      const modal = document.getElementById('modal-app-setup');
+      if (!modal) {
+        // Fallback to direct install if modal missing
+        return executeInstall(appId, {}, triggerBtn);
+      }
+
+      // Show temporary loading state if trigger button was provided
+      let origHtml = '';
+      if (triggerBtn) {
+        origHtml = triggerBtn.innerHTML;
+        triggerBtn.disabled = true;
+        triggerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang đọc cấu hình...';
+      }
+
+      try {
+        const res = await fetch(`/api/modules/apps/${appId}/setup-schema`);
+        if (!res.ok) throw new Error('Không thể tải cấu hình cài đặt');
+        const schema = await res.json();
+        currentSetupSchema = schema;
+
+        // Populate modal UI
+        const nameEl = document.getElementById('setup-app-name');
+        if (nameEl) nameEl.textContent = `Cài đặt ${schema.name}`;
+
+        const iconBox = document.getElementById('setup-app-icon-box');
+        const iconImg = document.getElementById('setup-app-icon');
+        if (iconImg) {
+          iconImg.src = `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${app.logo_id || app.id}.png`;
+          iconImg.onerror = function() {
+            this.onerror = null;
+            if (iconBox) iconBox.innerHTML = `<i class="fa-solid ${app.icon || 'fa-cubes'} text-cyan-400 text-lg"></i>`;
+          };
+        }
+
+        // Existing data warning & options
+        const alertBox = document.getElementById('setup-existing-alert');
+        const alertPath = document.getElementById('setup-existing-path');
+        if (alertBox) {
+          if (schema.has_existing_data) {
+            alertBox.classList.remove('hidden');
+            if (alertPath) alertPath.textContent = schema.config_path || `/appdata/${schema.id}`;
+            const keepRadio = document.querySelector('input[name="setup-data-mode"][value="keep"]');
+            if (keepRadio) keepRadio.checked = true;
+          } else {
+            alertBox.classList.add('hidden');
+          }
+        }
+
+        // Port input
+        const portInput = document.getElementById('setup-input-port');
+        if (portInput) {
+          portInput.value = schema.default_port || '';
+        }
+
+        // Volumes list
+        const volContainer = document.getElementById('setup-volumes-list');
+        if (volContainer) {
+          if (!schema.volumes || schema.volumes.length === 0) {
+            volContainer.innerHTML = '<p class="text-slate-500 italic py-1">Không có volume lưu trữ cần ánh xạ.</p>';
+          } else {
+            volContainer.innerHTML = schema.volumes.map((v, idx) => {
+              const parts = v.split(':');
+              const host = parts[0] || '';
+              const container = parts[1] || '';
+              const isConfig = host.startsWith('/appdata') || host.startsWith('/config');
+              const badge = isConfig
+                ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono border border-amber-500/20">Config / Database</span>'
+                : '<span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/20">Data / Storage Pool</span>';
+
+              return `
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 font-mono truncate max-w-[200px]" title="Đích trong container: ${container}">➜ Container: <strong class="text-slate-200">${container}</strong></span>
+                    ${badge}
+                  </div>
+                  <input type="text" data-vol-index="${idx}" data-vol-container="${container}" value="${host}"
+                         class="setup-vol-input w-full bg-slate-900 border border-slate-700/70 rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
+                </div>
+              `;
+            }).join('');
+          }
+        }
+
+        // Bind Confirm Install Button
+        const confirmBtn = document.getElementById('setup-btn-confirm-install');
+        if (confirmBtn) {
+          confirmBtn.onclick = async () => {
+            await doConfirmInstall(schema, confirmBtn);
+          };
+        }
+
+        const hostRadio = document.querySelector('input[name="setup-target"][value="host"]');
+        if (hostRadio) hostRadio.checked = true;
+        updateSetupTarget();
+
+        modal.classList.remove('hidden');
+      } catch (err) {
+        alert('Lỗi khởi tạo cấu hình app: ' + (err.message || err));
+      } finally {
+        if (triggerBtn) {
+          triggerBtn.disabled = false;
+          triggerBtn.innerHTML = origHtml;
+        }
+      }
+    }
+
+    // Host (docker run) or OMV Compose (generate a file to create in OMV)
+    function getSetupTarget() {
+      const r = document.querySelector('input[name="setup-target"]:checked');
+      return r ? r.value : 'host';
+    }
+
+    function updateSetupTarget() {
+      const omv = getSetupTarget() === 'omv';
+      const label = document.querySelector('#setup-btn-confirm-install span');
+      const icon = document.querySelector('#setup-btn-confirm-install i');
+      if (label) label.textContent = omv ? 'Tạo file Compose' : 'Bắt đầu cài đặt';
+      if (icon) icon.className = omv ? 'fa-solid fa-layer-group text-xs' : 'fa-solid fa-cloud-arrow-down text-xs';
+    }
+
+    function closeAppSetupModal() {
+      const modal = document.getElementById('modal-app-setup');
+      if (modal) modal.classList.add('hidden');
+      currentSetupSchema = null;
+    }
+
+    async function doConfirmInstall(schema, btn) {
+      if (!schema) return;
+      const appId = schema.id;
+
+      // Read configured port
+      const portInput = document.getElementById('setup-input-port');
+      const targetPort = portInput ? portInput.value.trim() : '';
+      let ports = { ...(schema.ports || {}) };
+      if (targetPort && schema.default_port) {
+        // If container port exists, map chosen host port to original container port
+        const originalContainerPort = ports[schema.default_port] || schema.default_port;
+        ports = { [targetPort]: String(originalContainerPort) };
+      }
+
+      // Read configured volumes
+      const volInputs = document.querySelectorAll('.setup-vol-input');
+      const volumes = [];
+      volInputs.forEach(inp => {
+        const h = inp.value.trim();
+        const c = inp.getAttribute('data-vol-container') || '';
+        if (h && c) {
+          volumes.push(`${h}:${c}`);
+        }
+      });
+
+      // Read wipe data choice
+      let wipeExisting = false;
+      const wipeRadio = document.querySelector('input[name="setup-data-mode"][value="wipe"]');
+      if (wipeRadio && wipeRadio.checked) {
+        wipeExisting = true;
+      }
+
+      // OMV Compose: nothing is deployed here, we hand over a Compose file for OMV to run
+      if (getSetupTarget() === 'omv') {
+        try {
+          const res = await fetch(`/api/modules/apps/${appId}/compose`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ports: Object.keys(ports).length > 0 ? ports : null,
+              volumes: volumes.length > 0 ? volumes : null
+            })
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || 'Không thể tạo file Compose');
+          }
+          const out = await res.json();
+          closeAppSetupModal();
+          showComposeResult(out.filename, out.yaml);
+        } catch (e) {
+          alert('Lỗi tạo file Compose: ' + (e.message || e));
+        }
+        return;
+      }
+
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Cài...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang triển khai...';
       }
+
       try {
-        await controlApp(appId, 'install');
+        await executeInstall(appId, {
+          ports: Object.keys(ports).length > 0 ? ports : null,
+          volumes: volumes.length > 0 ? volumes : null,
+          wipe_existing_data: wipeExisting
+        });
+        closeAppSetupModal();
         renderStoreItems();
-        if (currentTab === 'apps') loadAppCatalog();
+        if (currentTab === 'apps' && typeof loadAppCatalog === 'function') {
+          loadAppCatalog(true);
+        }
       } catch (e) {
         alert('Lỗi cài đặt: ' + (e.message || e));
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down text-xs"></i> <span>Bắt đầu cài đặt</span>';
+        }
+      }
+    }
+
+    function showComposeResult(filename, yaml) {
+      document.getElementById('compose-result-name').textContent = filename;
+      document.getElementById('compose-result-yaml').value = yaml;
+      document.getElementById('compose-copy-label').textContent = 'Sao chép';
+      document.getElementById('modal-compose-result').classList.remove('hidden');
+    }
+
+    function closeComposeResult() {
+      document.getElementById('modal-compose-result').classList.add('hidden');
+    }
+
+    async function copyComposeYaml() {
+      const ta = document.getElementById('compose-result-yaml');
+      try {
+        await navigator.clipboard.writeText(ta.value);
+      } catch (e) {
+        ta.select(); // clipboard API needs HTTPS: fall back to the legacy copy
+        document.execCommand('copy');
+      }
+      const label = document.getElementById('compose-copy-label');
+      label.textContent = 'Đã sao chép';
+      setTimeout(() => { label.textContent = 'Sao chép'; }, 1500);
+    }
+
+    function downloadComposeYaml() {
+      const name = document.getElementById('compose-result-name').textContent || 'docker-compose';
+      const blob = new Blob([document.getElementById('compose-result-yaml').value], { type: 'text/yaml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name}.yml`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function executeInstall(appId, payload = {}, btn = null) {
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang kéo & chạy...';
+      }
+      try {
+        const res = await fetch(`/api/modules/apps/${appId}/install`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || 'Không thể triển khai container');
+        }
+        await loadAppCatalog(true);
+      } finally {
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down text-xs"></i> Cài';
@@ -422,6 +680,7 @@
       if (e.key === 'Escape') {
         closeContextMenu();
         closeAppDetail();
+        closeAppSetupModal();
         closeUninstallModal();
       }
     });

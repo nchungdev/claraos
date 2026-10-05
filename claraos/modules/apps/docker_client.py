@@ -114,13 +114,80 @@ class DockerManager:
             if create_res.status_code not in (201, 200):
                 logger.error(f"Failed to create container {name}: {create_res.text}")
                 return False
-
             cid = create_res.json().get("Id")
             # 4. Start container
             start_res = await client.post(f"/containers/{cid}/start")
             return start_res.status_code in (204, 304)
         except Exception as e:
             logger.error(f"Error deploying container {name}: {e}")
+            return False
+
+    async def check_app_config_exists(self, app_id: str) -> bool:
+        """Checks if /appdata/{app_id} exists on the host filesystem via a quick container inspect or test."""
+        clean_id = app_id.strip().lower()
+        if not clean_id:
+            return False
+        client = self._get_client()
+        if not client:
+            return False
+        try:
+            # We mount /appdata as read-only and test if child directory clean_id exists
+            payload = {
+                "Image": "ghcr.io/nchungdev/claraos:latest",
+                "Cmd": ["sh", "-c", f'test -d "/parent/{clean_id}"'],
+                "HostConfig": {
+                    "Binds": ["/appdata:/parent:ro"]
+                }
+            }
+            res = await client.post("/containers/create", json=payload)
+            if res.status_code != 201:
+                return False
+            cid = res.json().get("Id")
+            try:
+                await client.post(f"/containers/{cid}/start")
+                wait_res = await client.post(f"/containers/{cid}/wait")
+                return wait_res.json().get("StatusCode") == 0
+            finally:
+                await client.delete(f"/containers/{cid}", params={"force": "true"})
+        except Exception as e:
+            logger.error(f"Error checking config existence for {clean_id}: {e}")
+            return False
+
+    async def purge_app_config(self, app_id: str) -> bool:
+        """Safely removes the /appdata/{app_id} directory on the host filesystem."""
+        clean_id = app_id.strip().lower()
+        # Safety guards: NEVER purge system root, critical paths, or empty strings
+        if not clean_id or clean_id in ("root", "appdata", "srv", "data", "media", "config", "etc", "var", "home", "usr"):
+            logger.warning(f"Refusing to purge reserved/critical path keyword: '{clean_id}'")
+            return False
+
+        client = self._get_client()
+        if not client:
+            return False
+        try:
+            # Execute rm -rf on the specific app directory inside /appdata
+            logger.info(f"Purging app config for '{clean_id}' (/appdata/{clean_id})...")
+            payload = {
+                "Image": "ghcr.io/nchungdev/claraos:latest",
+                "Cmd": ["sh", "-c", f'if [ -d "/parent/{clean_id}" ]; then rm -rf "/parent/{clean_id}"; fi'],
+                "HostConfig": {
+                    "Binds": ["/appdata:/parent:rw"]
+                }
+            }
+            res = await client.post("/containers/create", json=payload)
+            if res.status_code != 201:
+                logger.error(f"Failed to create purge helper container: {res.text}")
+                return False
+            cid = res.json().get("Id")
+            try:
+                await client.post(f"/containers/{cid}/start")
+                wait_res = await client.post(f"/containers/{cid}/wait")
+                code = wait_res.json().get("StatusCode", 1)
+                return code == 0
+            finally:
+                await client.delete(f"/containers/{cid}", params={"force": "true"})
+        except Exception as e:
+            logger.error(f"Error purging app config for {clean_id}: {e}")
             return False
 
 

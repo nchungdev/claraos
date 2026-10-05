@@ -71,27 +71,27 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "openmediavault:host"
     },
     {
-        "id": "agent-hub",
-        "name": "Clara",
+        "id": "agent-bridge",
+        "name": "Agent Bridge",
         "category": "System",
-        "description": "Clara — điều phối Antigravity, Claude Code và Codex.",
-        "icon": "fa-brain",
-        "logo": "/icons/clara.svg",
-        "logo_id": "clara",
+        "description": "Agent Bridge — điều phối Antigravity, Claude Code và Codex.",
+        "icon": "fa-bolt",
+        "logo": "/icons/bridge.svg",
+        "logo_id": "bridge",
         "subdomain": "agent",
         "default_port": 8088,
         "protected": True,
         "manageable": False,
         "installed": True,
         "is_running": True,
-        "image": "native:agent-hub",
+        "image": "native:agent-bridge",
         # how ClaraOS restarts this app's server (it is not a Docker container): the host process
         # exposes POST /api/admin/restart; override the URL when the host is not host.docker.internal
         "restart": {
             "kind": "http",
-            "url": "http://host.docker.internal:8088/api/admin/restart",
-            "url_env": "AGENT_HUB_RESTART_URL",
-            "confirm": "Restart server Clara? Mọi terminal và agent đang chạy trong Clara sẽ bị tắt.",
+            "url": "http://172.22.0.1:8088/api/admin/restart",
+            "url_env": "AGENT_BRIDGE_RESTART_URL",
+            "confirm": "Mọi terminal và agent đang chạy trong Agent Bridge sẽ bị ngắt kết nối tạm thời.",
         },
     },
     {
