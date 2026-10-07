@@ -10,7 +10,7 @@ services:
       - PGID=1000
     volumes:
       - /appdata/rclone-manager/data:/data
-      - /appdata/rclone-manager/config:/config
+      - /home/chungnh/.config/rclone:/config
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
       interval: 30s

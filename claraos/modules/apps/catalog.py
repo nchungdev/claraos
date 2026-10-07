@@ -137,7 +137,7 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "image": "ghcr.io/zarestia-dev/rclone-manager:latest",
         "default_port": 8099,
         "ports": {"8099": "8080"},
-        "volumes": ["/appdata/rclone-manager/data:/data", "/appdata/rclone-manager/config:/config"],
+        "volumes": ["/appdata/rclone-manager/data:/data", "/home/chungnh/.config/rclone:/config"],
         "env": ["PUID=1000", "PGID=1000"]
     },
     # 3. Media Streaming & Request
