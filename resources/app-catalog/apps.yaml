@@ -50,6 +50,20 @@ apps:
     subdomain: rclone
     installable: false
 
+  - id: rclone-manager
+    name: Rclone Manager
+    category: Cloud storage
+    description: GUI quản lý remote, mount, transfer và theo dõi job Rclone (chế độ headless/web).
+    container_name: rclone-manager
+    icon: fa-cloud-arrow-up
+    logo_id: rclone
+    default_port: 8099
+    subdomain: rclone-manager
+    installable: true
+    image: ghcr.io/zarestia-dev/rclone-manager:latest
+    template: templates/rclone-manager.yml
+    github_repo: https://github.com/Zarestia-Dev/rclone-manager
+
   - id: ariang
     name: AriaNg
     category: Download workflow

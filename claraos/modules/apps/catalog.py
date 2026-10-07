@@ -126,6 +126,20 @@ APP_CATALOG: List[Dict[str, Any]] = [
         "container_name": "cloudflared-rclone",
         "image": "rclone/rclone:latest"
     },
+    {
+        "id": "rclone-manager",
+        "name": "Rclone Manager",
+        "category": "System",
+        "description": "GUI quản lý remote, mount, transfer và theo dõi job Rclone (chế độ headless/web).",
+        "icon": "fa-cloud-arrow-up",
+        "logo_id": "rclone",
+        "subdomain": "rclone-manager",
+        "image": "ghcr.io/zarestia-dev/rclone-manager:latest",
+        "default_port": 8099,
+        "ports": {"8099": "8080"},
+        "volumes": ["/appdata/rclone-manager/data:/data", "/appdata/rclone-manager/config:/config"],
+        "env": ["PUID=1000", "PGID=1000"]
+    },
     # 3. Media Streaming & Request
     {
         "id": "plex",
